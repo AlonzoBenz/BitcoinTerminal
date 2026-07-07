@@ -139,8 +139,11 @@ Un solo `site/index.html` estático generado por `render.py`. Gráficas con Char
 ## 7. Pruebas (corren en el workflow antes de cada build)
 
 1. **`test_monthly_vs_excel`** — la base mensual reconstruida desde APIs empata con
-   `Modelo_Calibrado_Cloud.xlsx` en 2015M01–2026M03 dentro de tolerancia. **Bloquea todo
-   lo demás**; hasta que pase, no se publica nada.
+   `Modelo_Calibrado_Cloud.xlsx` en 2015M01–2026M03. Tolerancia relativa inicial: **0.1%
+   por celda**; si una serie la excede por diferencias de *vintage* (las APIs revisan
+   histórico), la tolerancia de esa serie puede ampliarse solo con justificación
+   documentada en el propio test. **Bloquea todo lo demás**; hasta que pase, no se
+   publica nada.
 2. **`test_estimate_frozen`** — el Calibrado 6D sobre la muestra congelada de la tesis
    reproduce: Bounds F=44.09, ECT=−0.2525, MC2=1.114, RV12=1.975 (tolerancia al 4º
    decimal, igual que la validación Python vs EViews). Es el candado del "congelado":
