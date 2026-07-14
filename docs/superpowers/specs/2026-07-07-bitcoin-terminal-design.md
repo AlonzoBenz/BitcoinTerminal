@@ -75,7 +75,7 @@ El modo `--daily` es el `--weekly` saltándose `estimate.py`.
 | TxVolumeUSD | MC2 | blockchain.info `estimated-transaction-volume-usd` | diaria | bajo |
 | TxTfrCnt | MC1 | blockchain.info `n-transactions` | diaria | bajo |
 | Oro XAUUSD | RV12 | Stooq (CSV histórico gratuito) | diaria | bajo |
-| Dominancia BTC | UC | CoinStats OpenAPI (fuente de la tesis) | diaria | **medio — resolver en implementación**: si el endpoint histórico no es viable, evaluar CoinMarketCap u otra; el test vs Excel (§7) valida cualquier sustituto |
+| Dominancia BTC | UC | **Semilla histórica del Excel (2015–2026M03, ya validada) + acumulación diaria desde CoinGecko `/global`** (gratis, sin key). El cron diario appendea la dominancia del día; la agregación mensual promedia las muestras | diaria | bajo (resuelto: sin dependencia de CoinStats) |
 | M2SL | denominador DMB, MC2 | FRED API (key en Secrets) | mensual, rezago ~4 sem | bajo |
 
 La agregación diaria→mensual replica la del Excel de la tesis (`TxTfrCnt_daily_avg` ⇒
@@ -163,7 +163,7 @@ Un solo `site/index.html` estático generado por `render.py`. Gráficas con Char
 
 | Riesgo | Mitigación |
 |---|---|
-| Fuente histórica de dominancia BTC (CoinStats) puede no ser viable sin key | Resolver en implementación; `test_monthly_vs_excel` valida cualquier sustituto |
+| ~~Fuente histórica de dominancia BTC~~ | **Resuelto**: semilla del Excel + acumulación diaria CoinGecko (§4) |
 | Reglas de agregación mensual desconocidas con exactitud | Arqueología contra el Excel + test de tolerancia (§4, §7) |
 | GitHub deshabilita crons tras 60 días sin actividad en el repo | Cada corrida commitea ⇒ hay actividad perpetua; el email de fallo avisa si algo se detiene |
 | Rate limits de blockchain.info / CoinGecko en CI | Backoff + caché en repo; el build diario tolera series STALE |
