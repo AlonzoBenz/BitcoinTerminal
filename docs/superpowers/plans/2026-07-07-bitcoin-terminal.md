@@ -623,7 +623,7 @@ def check(name, df, prev=None):
         return False, "mas de 5% de NaN"
     if name in POSITIVE and (df["value"].dropna() <= 0).any():
         return False, "valores negativos o cero en serie positiva"
-    if prev is not None and len(prev) >= 30:
+    if prev is not None and len(prev) >= 10:
         base = float(prev["value"].tail(30).median())
         last = float(df["value"].iloc[-1])
         if base > 0 and not (1 / MAX_JUMP <= last / base <= MAX_JUMP):
