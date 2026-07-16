@@ -37,6 +37,7 @@ def _gold_monthly():
 
 
 def build(start="2013-01-01"):
+    # start=2013: warm-up holgado para el shift(12) de RV12 antes de 2015
     price = _serie("btc_price_sampled").resample("MS").last()
     supply = _serie("btc_supply").resample("MS").last()
     txcnt = _serie("tx_count_sampled").resample("MS").mean()
@@ -64,7 +65,7 @@ def build(start="2013-01-01"):
     df["RV12"] = (np.log(df["BTC_price"] / df["BTC_price"].shift(12))
                   - np.log(df["Gold_price"] / df["Gold_price"].shift(12)))
     df["UC"] = np.log(df["Dominance_dec"] / (1 - df["Dominance_dec"]))
-    return df.loc["2015-01-01":]
+    return df.loc["2015-01-01":]   # inicio de la muestra de la tesis
 
 
 def write(path="data/monthly.csv"):

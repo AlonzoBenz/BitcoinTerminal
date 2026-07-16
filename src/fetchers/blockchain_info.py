@@ -30,4 +30,11 @@ def fetch_sampled(key):
     (ver scripts/descubrir_agregacion.py)."""
     js = http.get(f"https://api.blockchain.info/charts/{CHARTS[key]}",
                   params={"timespan": "all", "format": "json"})
-    return parse(js)
+    df = parse(js)
+    # la base mensual depende de esta malla: si la API cambia su muestreo por
+    # defecto, fallar ruidosamente aqui y no en silencio en la agregacion
+    paso = df["date"].diff().dt.days.mode()
+    if paso.empty or paso.iloc[0] != 4:
+        raise RuntimeError(
+            f"chart {CHARTS[key]}: el muestreo por defecto ya no es de 4 dias")
+    return df
