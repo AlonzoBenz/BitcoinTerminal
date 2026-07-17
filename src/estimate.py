@@ -13,6 +13,8 @@ def run(monthly_csv="data/monthly.csv", out="data/results.json"):
     df = pd.read_csv(monthly_csv, parse_dates=["Fecha"], index_col="Fecha")
     if "m2_published" in df.columns:
         est = df[df["m2_published"].astype(bool)]
+        assert est.index.equals(df.index[:len(est)]), \
+            "m2_published debe ser un prefijo contiguo: el trend de dmb_star se desalinearia"
     else:                                   # fixture de la tesis: todo publicado
         est = df
     est_path = pathlib.Path(out).parent / "monthly_est.csv"
@@ -44,7 +46,8 @@ def run(monthly_csv="data/monthly.csv", out="data/results.json"):
         n=m["n"], r2adj=m["r2adj"], dw=m["dw"], boundsF=m["boundsF"], crit=CRIT,
         sample=[str(m["sample"][0].date()), str(m["sample"][1].date())],
         ect=dict(coef=m["ect"]["coef"], p=m["ect"]["p"],
-                 half_life_m=float(np.log(0.5) / np.log(1 + m["ect"]["coef"]))),
+                 half_life_m=(float(np.log(0.5) / np.log(1 + m["ect"]["coef"]))
+                              if -1 < m["ect"]["coef"] < 0 else None)),
         lr={k: dict(coef=d["coef"], p=d["p"], stars=stars(d["p"])) for k, d in m["lr"].items()},
         gap=dict(hoy=gap_hoy, fecha=gap_fecha),
         series=dict(fechas=[str(d.date()) for d in df.index],
