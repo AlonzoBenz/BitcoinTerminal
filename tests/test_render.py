@@ -15,3 +15,14 @@ def test_html_contiene_lo_esencial(tmp_path):
                  "id=\"ticker\"", "El modelo", "Funciones del dinero",
                  'integrity="sha384-', "puntos log", "spanGaps"):
         assert frag in html, frag
+
+
+def test_degradacion_sin_datos(tmp_path):
+    """Si monthly.csv (y por tanto data/raw junto a el) no existe, el grafico
+    de Variables se degrada a oculto en vez de tronar (T10 review)."""
+    results = json.loads((FIX / "results_demo.json").read_text())
+    out = tmp_path / "index.html"
+    render.render(results, {"btc_price": {"status": "FRESCO", "last": "2026-07-16"}},
+                  out=out, monthly_csv=tmp_path / "no_existe.csv")
+    html = out.read_text()
+    assert 'style="display:none"><canvas id="c_vars"></canvas>' in html

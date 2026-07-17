@@ -3,7 +3,11 @@ Serie insana => se conserva el ultimo CSV bueno y se marca SUSPECT."""
 
 MAX_JUMP = 4.0          # ratio max ultimo valor vs mediana de los 30 previos
 POSITIVE = {"btc_price", "btc_supply", "tx_volume_usd", "tx_count",
-            "gold_price", "m2sl", "difficulty", "fees_btc"}
+            "gold_price", "m2sl", "difficulty", "fees_btc",
+            "btc_price_sampled", "tx_count_sampled", "tx_volume_usd_sampled"}
+POSITIVE_TAIL = 90     # solo se exige positividad en la cola reciente: btc_price,
+                       # difficulty y fees_btc traen ceros legitimos en 2009-2010
+                       # (pre-mercado / arranque de la red) en el historico completo
 MAX_AGE_DAYS = {"m2sl": 45}          # default 3 para series diarias
 DEFAULT_MAX_AGE = 3
 
@@ -13,7 +17,7 @@ def check(name, df, prev=None):
         return False, "serie vacia"
     if df["value"].isna().mean() > 0.05:
         return False, "mas de 5% de NaN"
-    if name in POSITIVE and (df["value"].dropna() <= 0).any():
+    if name in POSITIVE and (df["value"].dropna().tail(POSITIVE_TAIL) <= 0).any():
         return False, "valores negativos o cero en serie positiva"
     if prev is not None and len(prev) >= 10:
         base = float(prev["value"].tail(30).median())

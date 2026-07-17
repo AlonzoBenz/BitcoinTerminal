@@ -23,6 +23,19 @@ def fetch(key):
     return parse(js)
 
 
+def fetch_daily(key):
+    """Version a 1 punto/dia (ultimo valor observado del dia) de un chart sin
+    muestrear. Existe porque, para el chart "total-bitcoins" (btc_supply),
+    sampled=false devuelve granularidad de bloque (~925k filas, ~28MB: infla
+    el repo sin aportar nada, la oferta crece casi linealmente) en vez de la
+    serie diaria que uso la tesis. Bajamos el payload completo (transitorio,
+    no se persiste) y solo guardamos el cierre de cada dia -> mismo nivel de
+    precision que un fetch diario real, archivo chico."""
+    df = fetch(key)
+    daily = df.set_index("date")["value"].resample("D").last().dropna()
+    return daily.reset_index()
+
+
 def fetch_sampled(key):
     """Serie con el muestreo por defecto de blockchain.info (1 punto cada 4 dias,
     malla anclada en 2009-01-03). Es la forma en que la tesis descargo los charts:

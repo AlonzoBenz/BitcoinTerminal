@@ -4,7 +4,10 @@ Reglas de agregacion fijadas empiricamente contra el Excel de la tesis con
 scripts/descubrir_agregacion.py (protegidas por tests/test_monthly_vs_excel.py):
 
   BTC_price   last del mes sobre *_sampled (malla blockchain.info de 4 dias)
-  BTC_supply  last del mes sobre serie diaria
+  BTC_supply  last del mes sobre serie diaria (T11: blockchain.info con
+              sampled=false da granularidad de bloque para este chart;
+              build.py usa fetch_daily, que baja lo mismo pero solo
+              persiste 1 punto/dia -- ver src/build.py)
   TxVolumeUSD mean del mes sobre *_sampled x dias del mes (estimado mensual)
   TxTfrCnt    mean del mes sobre *_sampled (promedio diario)
   Gold_price  semilla mensual congelada (cierre de futuros, base de la tesis)
