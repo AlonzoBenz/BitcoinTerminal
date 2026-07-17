@@ -24,5 +24,7 @@ def test_fetch_con_falla_conserva_csv_previo(tmp_path, monkeypatch):
     monkeypatch.setattr(build.dominance, "append_today", lambda: True)
 
     fresh = build.fetch_all()
-    assert fresh["btc_price_sampled"]["status"] in ("STALE", "SUSPECT", "DEAD", "FRESCO")
+    # SUSPECT = esta corrida no pudo validar/refrescar la serie;
+    # se muestra el ultimo dato bueno
+    assert fresh["btc_price_sampled"]["status"] == "SUSPECT"
     assert len(base.load("btc_price_sampled")) == 40          # el CSV previo sobrevive

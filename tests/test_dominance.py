@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from src.fetchers import dominance
 
 
@@ -10,6 +11,15 @@ def test_append_es_idempotente(tmp_path, monkeypatch):
     dominance.append_today()      # segunda vez el mismo dia: no duplica
     df = pd.read_csv(daily)
     assert len(df) == 1
+
+
+def test_append_rechaza_valor_implausible(tmp_path, monkeypatch):
+    daily = tmp_path / "btc_dominance_daily.csv"
+    monkeypatch.setattr(dominance, "DAILY", daily)
+    monkeypatch.setattr(dominance, "hoy_dominancia", lambda: 999)
+    with pytest.raises(ValueError, match="fuera de rango plausible"):
+        dominance.append_today()
+    assert not daily.exists()          # no se escribio basura
 
 
 def test_monthly_series_une_semilla_y_diario(tmp_path, monkeypatch):

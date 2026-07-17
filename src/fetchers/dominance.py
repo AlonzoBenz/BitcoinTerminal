@@ -21,7 +21,13 @@ def append_today():
             return False
     else:
         df = pd.DataFrame(columns=["date", "value"])
-    df.loc[len(df)] = [today, hoy_dominancia()]
+    val = hoy_dominancia()
+    # puerta de sanidad: toda la historia de la dominancia BTC cae dentro de
+    # este rango con margen enorme; fuera de el la API respondio basura y
+    # build.py degrada a STALE sin escribir nada
+    if not (20.0 <= val <= 95.0):
+        raise ValueError(f"dominancia fuera de rango plausible: {val}")
+    df.loc[len(df)] = [today, val]
     DAILY.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(DAILY, index=False)
     return True

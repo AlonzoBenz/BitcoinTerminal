@@ -56,6 +56,9 @@ def fetch_all():
                 status = "SUSPECT"
         except Exception as e:
             print(f"[fetch] {name}: {e} -> se conserva CSV previo", file=sys.stderr)
+            # SUSPECT = esta corrida no pudo validar/refrescar la serie;
+            # se muestra el ultimo dato bueno
+            status = "SUSPECT"
         cur = base.load(name)
         if cur is None or len(cur) == 0:
             fresh[name] = {"status": "DEAD", "last": "—"}
