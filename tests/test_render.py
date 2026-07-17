@@ -13,7 +13,8 @@ def test_html_contiene_lo_esencial(tmp_path):
     html = out.read_text()
     for frag in ("Fraunces", "chart.js", "BRECHA", f"{results['boundsF']:.2f}",
                  "id=\"ticker\"", "El modelo", "Funciones del dinero",
-                 'integrity="sha384-', "puntos log", "spanGaps"):
+                 'integrity="sha384-', "puntos log", "spanGaps",
+                 "og:title", 'rel="icon"', "c_price"):
         assert frag in html, frag
 
 
