@@ -1321,9 +1321,9 @@ Esperado: workflow verde, página pública sirviendo el dashboard.
 
 ```bash
 cd ~/BitcoinTerminal
-git log --all -p | grep -c "4ce45992" && echo "FALLO: key en historia" || echo "ok historia limpia"
+git log --all -p | grep -c "<primeros-8-hex-de-la-FRED-key>" && echo "FALLO: key en historia" || echo "ok historia limpia"
 grep -rn "api_key=" site/ data/ && echo "FALLO: key en artefactos" || echo "ok artefactos limpios"
-gh run view --log 2>/dev/null | grep -c "4ce45992" || echo "ok logs limpios"
+gh run view --log 2>/dev/null | grep -c "<primeros-8-hex-de-la-FRED-key>" || echo "ok logs limpios"
 ```
 Esperado: los tres "ok". Además, recomendar al usuario regenerar la FRED key (circuló en chat).
 
