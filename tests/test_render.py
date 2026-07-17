@@ -14,7 +14,7 @@ def test_html_contiene_lo_esencial(tmp_path):
     for frag in ("Fraunces", "chart.js", "BRECHA", f"{results['boundsF']:.2f}",
                  "id=\"ticker\"", "El modelo", "Funciones del dinero",
                  'integrity="sha384-', "puntos log", "spanGaps",
-                 "og:title", 'rel="icon"', "c_price"):
+                 "og:title", 'rel="icon"', "c_price", "setInterval"):
         assert frag in html, frag
 
 

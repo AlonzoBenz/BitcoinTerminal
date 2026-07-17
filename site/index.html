@@ -175,10 +175,14 @@ const _io = new IntersectionObserver(es => {
   }});
 }, {rootMargin: "-45% 0px -50% 0px"});
 _secs.forEach(s => _io.observe(s));
-fetch("https://api.coingecko.com/api/v3/global").then(r => r.json()).then(g => {
-  document.getElementById("tk_dom").textContent = g.data.market_cap_percentage.btc.toFixed(1) + "%";
-  return fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-}).then(r => r.json()).then(p => {
-  document.getElementById("tk_price").textContent = "$" + p.bitcoin.usd.toLocaleString("en-US");
-}).catch(() => {});
+function actualizarTicker() {
+  fetch("https://api.coingecko.com/api/v3/global").then(r => r.json()).then(g => {
+    document.getElementById("tk_dom").textContent = g.data.market_cap_percentage.btc.toFixed(1) + "%";
+    return fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+  }).then(r => r.json()).then(p => {
+    document.getElementById("tk_price").textContent = "$" + p.bitcoin.usd.toLocaleString("en-US");
+  }).catch(() => {});
+}
+actualizarTicker();
+setInterval(actualizarTicker, 60000);  // spec §5.6: refresco cada 60s (limite libre de CoinGecko)
 </script></body></html>
