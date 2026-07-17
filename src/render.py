@@ -48,7 +48,8 @@ td,th{padding:6px 10px 6px 0;text-align:left;border-bottom:1px solid var(--line)
 .num{font-family:'IBM Plex Mono',monospace;text-align:right}
 .alerta{background:var(--warnbg);border:1px solid #fac775;color:var(--warn);
 border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13.5px}
-canvas{max-height:280px}
+.cwrap{position:relative;height:280px}
+.cwrap.sm{height:200px}
 footer{color:var(--faint);font-size:11.5px;padding:20px 4vw;border-top:1px solid var(--line)}
 """
 
@@ -62,6 +63,11 @@ VARS_PALETA = {"DMB": "#f7931a", "MC2": "#a09681", "MC1": "#8a7a5c",
 
 def _ancla(s):
     return s.lower().replace(" ", "-").replace("ó", "o")
+
+
+def _fmt_p(p):
+    """p-values diminutos reportados honestamente, no como 0.0000."""
+    return "p &lt; 0.0001" if p < 1e-4 else f"p = {p:.4f}"
 
 
 def _leer_vars(monthly_csv):
@@ -120,7 +126,8 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
     lr = r["lr"]
     filas_lr = "".join(
         f'<tr><td>{k}</td><td class="num">{d["coef"]:.4f}{d["stars"]}</td>'
-        f'<td class="num">{d["p"]:.4f}</td></tr>' for k, d in lr.items())
+        f'<td class="num">{"&lt; 0.0001" if d["p"] < 1e-4 else f"{d['p']:.4f}"}</td></tr>'
+        for k, d in lr.items())
     funciones = [
         ("Reserva de valor", "RV12", lr["RV12"]["p"] < 0.05),
         ("Medio de cambio", "MC2", lr["MC2"]["p"] < 0.05),
@@ -168,13 +175,13 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <span class="pill {"ok" if cointegra else "bad"}">{"SÍ · supera I(1) al 1%" if cointegra else "EN DUDA"}</span></div>
 <div class="card"><div class="lbl">VELOCIDAD DE AJUSTE</div>
 <div class="big mono">{r["ect"]["coef"]:.4f}</div>
-<p class="sub">ECT, p = {r["ect"]["p"]:.4f}</p></div>
+<p class="sub">ECT, {_fmt_p(r["ect"]["p"])}</p></div>
 </div>
-<div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><canvas id="c_gap"></canvas>
+<div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><div class="cwrap"><canvas id="c_gap"></canvas></div>
 <p class="sub">— tramo ámbar: M2 provisional (nowcast)</p></div>
 </section>
 <section id="{_ancla(SECCIONES[1])}"><h2>Variables</h2>
-<div class="card"><canvas id="c_vars"{oculto["vars"]}></canvas><p class="sub">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div></section>
+<div class="card"><div class="cwrap"{oculto["vars"]}><canvas id="c_vars"></canvas></div><p class="sub">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div></section>
 <section id="{_ancla(SECCIONES[2])}"><h2>Cointegración</h2>
 <div class="card"><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
 {"".join(f'<tr><td>{n}</td><td class="num">{c[0]:.3f}</td><td class="num">{c[1]:.3f}</td><td class="num">{r["boundsF"]:.2f}</td></tr>' for n, c in r["crit"].items())}
@@ -183,8 +190,8 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="grid">{cards_fn}</div>
 <div class="card"><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr>{filas_lr}</table></div></section>
 <section id="{_ancla(SECCIONES[4])}"><h2>Hechos estilizados</h2>
-<div class="grid"><div class="card"><div class="lbl">TRANSACCIONES / MES</div><canvas id="c_tx"{oculto["tx"]}></canvas></div>
-<div class="card"><div class="lbl">OFERTA DE BTC</div><canvas id="c_supply"{oculto["supply"]}></canvas></div></div></section>
+<div class="grid"><div class="card"><div class="lbl">TRANSACCIONES / MES</div><div class="cwrap sm"{oculto["tx"]}><canvas id="c_tx"></canvas></div></div>
+<div class="card"><div class="lbl">OFERTA DE BTC</div><div class="cwrap sm"{oculto["supply"]}><canvas id="c_supply"></canvas></div></div></div></section>
 <section id="{_ancla(SECCIONES[5])}"><h2>Mercado</h2>
 <div class="card" id="ticker"><div class="lbl">EN VIVO (navegador → CoinGecko)</div>
 <p class="big mono" id="tk_price">—</p><p class="sub" id="tk_dom">al cargar esta página; si falla, últimos valores del build</p></div></section>
@@ -209,10 +216,12 @@ def _script(r, sec):
                         dmb_star=r["series"]["dmb_star"]))
     NOWCAST = json.dumps(r["series"]["nowcast"])
     S = json.dumps(sec)
-    ejes = ('{plugins:{legend:{labels:{color:"#6e6656"}}},'
+    ejes = ('{responsive:true,maintainAspectRatio:false,'
+            'plugins:{legend:{labels:{color:"#6e6656"}}},'
             'scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681"}},'
             'y:{ticks:{color:"#a09681"}}}}')
-    ejes_anios = ('{plugins:{legend:{display:false}},'
+    ejes_anios = ('{responsive:true,maintainAspectRatio:false,'
+                  'plugins:{legend:{display:false}},'
                   'scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",'
                   'callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},'
                   'y:{ticks:{color:"#a09681"}}}}')

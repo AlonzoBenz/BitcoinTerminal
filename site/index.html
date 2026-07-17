@@ -40,7 +40,8 @@ td,th{padding:6px 10px 6px 0;text-align:left;border-bottom:1px solid var(--line)
 .num{font-family:'IBM Plex Mono',monospace;text-align:right}
 .alerta{background:var(--warnbg);border:1px solid #fac775;color:var(--warn);
 border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13.5px}
-canvas{max-height:280px}
+.cwrap{position:relative;height:280px}
+.cwrap.sm{height:200px}
 footer{color:var(--faint);font-size:11.5px;padding:20px 4vw;border-top:1px solid var(--line)}
 </style></head><body>
 <header><div class="wordmark">₿<b>itcoin</b> Terminal</div><nav><a href="#el-modelo">El modelo</a><a href="#variables">Variables</a><a href="#cointegracion">Cointegración</a><a href="#funciones-del-dinero">Funciones del dinero</a><a href="#hechos-estilizados">Hechos estilizados</a><a href="#mercado">Mercado</a><a href="#datos">Datos</a></nav></header>
@@ -62,23 +63,23 @@ footer{color:var(--faint);font-size:11.5px;padding:20px 4vw;border-top:1px solid
 <span class="pill ok">SÍ · supera I(1) al 1%</span></div>
 <div class="card"><div class="lbl">VELOCIDAD DE AJUSTE</div>
 <div class="big mono">-0.2537</div>
-<p class="sub">ECT, p = 0.0000</p></div>
+<p class="sub">ECT, p &lt; 0.0001</p></div>
 </div>
-<div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><canvas id="c_gap"></canvas>
+<div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><div class="cwrap"><canvas id="c_gap"></canvas></div>
 <p class="sub">— tramo ámbar: M2 provisional (nowcast)</p></div>
 </section>
 <section id="variables"><h2>Variables</h2>
-<div class="card"><canvas id="c_vars"></canvas><p class="sub">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div></section>
+<div class="card"><div class="cwrap"><canvas id="c_vars"></canvas></div><p class="sub">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div></section>
 <section id="cointegracion"><h2>Cointegración</h2>
 <div class="card"><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
 <tr><td>10%</td><td class="num">3.220</td><td class="num">4.047</td><td class="num">46.02</td></tr><tr><td>5%</td><td class="num">3.649</td><td class="num">4.528</td><td class="num">46.02</td></tr><tr><td>1%</td><td class="num">4.608</td><td class="num">5.669</td><td class="num">46.02</td></tr>
 </table><p class="sub">Caveat honesto: el RESET del 6D rechaza (p=0.008) — posible no linealidad; se reporta como limitación, igual que en la tesis.</p></div></section>
 <section id="funciones-del-dinero"><h2>Funciones del dinero</h2>
 <div class="grid"><div class="card"><div class="lbl">Reserva de valor · RV12</div><span class="pill ok">CUMPLE</span></div><div class="card"><div class="lbl">Medio de cambio · MC2</div><span class="pill ok">CUMPLE</span></div><div class="card"><div class="lbl">Unidad de cuenta · UC</div><span class="pill bad">NO SIGNIFICATIVA</span></div></div>
-<div class="card"><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr><tr><td>MC2</td><td class="num">1.1139***</td><td class="num">0.0000</td></tr><tr><td>RV12</td><td class="num">1.9709***</td><td class="num">0.0000</td></tr><tr><td>UC</td><td class="num">0.0967</td><td class="num">0.1781</td></tr></table></div></section>
+<div class="card"><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr><tr><td>MC2</td><td class="num">1.1139***</td><td class="num">&lt; 0.0001</td></tr><tr><td>RV12</td><td class="num">1.9709***</td><td class="num">&lt; 0.0001</td></tr><tr><td>UC</td><td class="num">0.0967</td><td class="num">0.1781</td></tr></table></div></section>
 <section id="hechos-estilizados"><h2>Hechos estilizados</h2>
-<div class="grid"><div class="card"><div class="lbl">TRANSACCIONES / MES</div><canvas id="c_tx"></canvas></div>
-<div class="card"><div class="lbl">OFERTA DE BTC</div><canvas id="c_supply"></canvas></div></div></section>
+<div class="grid"><div class="card"><div class="lbl">TRANSACCIONES / MES</div><div class="cwrap sm"><canvas id="c_tx"></canvas></div></div>
+<div class="card"><div class="lbl">OFERTA DE BTC</div><div class="cwrap sm"><canvas id="c_supply"></canvas></div></div></div></section>
 <section id="mercado"><h2>Mercado</h2>
 <div class="card" id="ticker"><div class="lbl">EN VIVO (navegador → CoinGecko)</div>
 <p class="big mono" id="tk_price">—</p><p class="sub" id="tk_dom">al cargar esta página; si falla, últimos valores del build</p></div></section>
@@ -97,15 +98,15 @@ new Chart(document.getElementById("c_gap"), {type: "line", data: {labels: R.fech
              segment: {borderColor: ctx => NOWCAST[ctx.p1DataIndex] ? "#e6b56a" : "#f7931a",
                        borderDash: ctx => NOWCAST[ctx.p1DataIndex] ? [4,3] : undefined}},
             {label: "DMB* equilibrio", data: R.dmb_star, borderColor: "#a09681", borderDash: [5, 4], pointRadius: 0, borderWidth: 1.5, spanGaps: false}]},
- options: {plugins:{legend:{labels:{color:"#6e6656"}}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681"}},y:{ticks:{color:"#a09681"}}}}});
+ options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#6e6656"}}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681"}},y:{ticks:{color:"#a09681"}}}}});
 if (S.vars) new Chart(document.getElementById("c_vars"), {type: "line",
- data: {labels: S.vars.fechas, datasets: [{label:"DMB",data:S.vars.DMB,borderColor:"#f7931a",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"MC2",data:S.vars.MC2,borderColor:"#a09681",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"MC1",data:S.vars.MC1,borderColor:"#8a7a5c",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"RV12",data:S.vars.RV12,borderColor:"#6e6656",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"UC",data:S.vars.UC,borderColor:"#c9bfa6",pointRadius:0,borderWidth:1.2,spanGaps:false}]}, options: {plugins:{legend:{labels:{color:"#6e6656"}}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681"}},y:{ticks:{color:"#a09681"}}}}});
+ data: {labels: S.vars.fechas, datasets: [{label:"DMB",data:S.vars.DMB,borderColor:"#f7931a",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"MC2",data:S.vars.MC2,borderColor:"#a09681",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"MC1",data:S.vars.MC1,borderColor:"#8a7a5c",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"RV12",data:S.vars.RV12,borderColor:"#6e6656",pointRadius:0,borderWidth:1.2,spanGaps:false},{label:"UC",data:S.vars.UC,borderColor:"#c9bfa6",pointRadius:0,borderWidth:1.2,spanGaps:false}]}, options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#6e6656"}}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681"}},y:{ticks:{color:"#a09681"}}}}});
 if (S.tx) new Chart(document.getElementById("c_tx"), {type: "line",
  data: {labels: S.tx.fechas, datasets: [{label: "tx/mes", data: S.tx.valores, borderColor: "#f7931a", pointRadius: 0, borderWidth: 1.5}]},
- options: {plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},y:{ticks:{color:"#a09681"}}}}});
+ options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},y:{ticks:{color:"#a09681"}}}}});
 if (S.supply) new Chart(document.getElementById("c_supply"), {type: "line",
  data: {labels: S.supply.fechas, datasets: [{label: "BTC en circulación", data: S.supply.valores, borderColor: "#8a7a5c", pointRadius: 0, borderWidth: 1.5}]},
- options: {plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},y:{ticks:{color:"#a09681"}}}}});
+ options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},y:{ticks:{color:"#a09681"}}}}});
 fetch("https://api.coingecko.com/api/v3/global").then(r => r.json()).then(g => {
   document.getElementById("tk_dom").textContent = "Dominancia BTC: " + g.data.market_cap_percentage.btc.toFixed(1) + "% · actualizado ahora";
   return fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
