@@ -4,8 +4,8 @@
   "last": "2026-07-17"
  },
  "tx_count_sampled": {
-  "status": "STALE",
-  "last": "2026-07-14"
+  "status": "FRESCO",
+  "last": "2026-07-18"
  },
  "tx_volume_usd_sampled": {
   "status": "FRESCO",
@@ -13,15 +13,15 @@
  },
  "btc_supply": {
   "status": "FRESCO",
-  "last": "2026-07-18"
+  "last": "2026-07-19"
  },
  "difficulty": {
   "status": "FRESCO",
-  "last": "2026-07-17"
+  "last": "2026-07-18"
  },
  "fees_btc": {
   "status": "FRESCO",
-  "last": "2026-07-17"
+  "last": "2026-07-18"
  },
  "gold_price": {
   "status": "FRESCO",
