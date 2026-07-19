@@ -182,6 +182,77 @@ def _leer_mercado(monthly_csv):
         return None
 
 
+def _brecha_stats(r):
+    """Serie histórica de la brecha (DMB-DMB*)*100 + percentil/z de hoy y
+    trayectoria de convergencia implícita por el ECT. None si no hay serie
+    utilizable (degradación T14)."""
+    series = r.get("series") or {}
+    fechas = series.get("fechas") or []
+    dmb = series.get("dmb") or []
+    dmb_star = series.get("dmb_star") or []
+    pares = [(f, (a - b) * 100) for f, a, b in zip(fechas, dmb, dmb_star)
+             if a is not None and b is not None]
+    if not pares:
+        return None
+    fechas_g = [f for f, _ in pares]
+    gap_series = [g for _, g in pares]
+    n = len(gap_series)
+    media = sum(gap_series) / n
+    sd = (sum((x - media) ** 2 for x in gap_series) / n) ** 0.5
+    gap_hoy = r["gap"]["hoy"]
+    pct = sum(1 for x in gap_series if x < gap_hoy) / n * 100
+    z = (gap_hoy - media) / sd if sd > 0 else 0.0
+    ect = r["ect"]["coef"]
+    conv = {k: gap_hoy * (1 + ect) ** k for k in (3, 6, 12)}
+    return dict(fechas=fechas_g, gap_series=gap_series, n=n, media=media,
+                sd=sd, pct=pct, z=z, conv=conv)
+
+
+def _leer_equilibrio(monthly_csv, gap_hoy):
+    """Última fila de monthly.csv con DMB no nulo -> nivel de equilibrio
+    implícito (market cap y precio), dado el gap de hoy. None si faltan
+    columnas o el archivo no existe."""
+    p = pathlib.Path(monthly_csv)
+    if not p.exists():
+        return None
+    try:
+        with open(p, newline="") as f:
+            rows = list(csv.DictReader(f))
+    except OSError:
+        return None
+    ult = None
+    for row in rows:
+        v = row.get("DMB", "")
+        if v not in ("", None):
+            ult = row
+    if ult is None:
+        return None
+    try:
+        dmb = float(ult["DMB"])
+        m2 = float(ult["M2SL_USD"])
+        supply = float(ult["BTC_supply"])
+        price_obs = float(ult["BTC_price"])
+    except (KeyError, ValueError):
+        return None
+    if supply <= 0:
+        return None
+    dmb_star_hoy = dmb - gap_hoy / 100
+    mcap_eq = math.exp(dmb_star_hoy) * m2
+    return dict(mcap_eq=mcap_eq, price_eq=mcap_eq / supply, price_obs=price_obs,
+                fecha=ult["Fecha"][:10])
+
+
+def _fmt_usd_abbrev(v):
+    """$X.XXe12 abreviado a $B/$T, convención del sitio."""
+    if v >= 1e12:
+        return f"${v / 1e12:.2f}T"
+    if v >= 1e9:
+        return f"${v / 1e9:.1f}B"
+    if v >= 1e6:
+        return f"${v / 1e6:.1f}M"
+    return f"${v:,.0f}"
+
+
 def _leer_raw_mensual(path, agg, drop_nonpos=False):
     """CSV diario (date,value) -> mensual. agg='sum' (flujo) o 'last' (nivel).
     drop_nonpos: valores <=0 se vuelven None (para ejes logarítmicos)."""
@@ -265,6 +336,37 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         f'del 6D rechaza (p=0.008) — posible no linealidad; se reporta como '
         f'limitación, igual que en la tesis.</p></div>')
 
+    # BRECHA: contexto histórico (percentil/z), trayectoria del ECT y
+    # equilibrio implícito en niveles (T14, todo derivado de r + monthly.csv)
+    brecha = _brecha_stats(r)
+    equilibrio = _leer_equilibrio(monthly_csv, gap)
+    if brecha:
+        contexto_brecha = (
+            f'<p class="sub">Percentil {brecha["pct"]:.0f} de la historia '
+            f'(z {brecha["z"]:+.1f})</p>'
+            f'<p class="sub mono" style="margin-bottom:0">Trayectoria implícita '
+            f'del ECT: {brecha["conv"][3]:+.0f} (3m) · {brecha["conv"][6]:+.0f} '
+            f'(6m) · {brecha["conv"][12]:+.0f} (12m) pts log '
+            f'<span style="font-style:italic">(ceteris paribus las demás '
+            f'variables)</span></p>')
+    else:
+        contexto_brecha = ""
+    if equilibrio:
+        mcap_str = _fmt_usd_abbrev(equilibrio["mcap_eq"])
+        precio_linea = (f'Precio implícito: ${equilibrio["price_eq"]:,.0f} · '
+                         f'observado: ${equilibrio["price_obs"]:,.0f}')
+    else:
+        mcap_str = "—"
+        precio_linea = "Precio implícito: — · observado: —"
+    card_equilibrio = (
+        '<div class="card"><div class="lbl">EQUILIBRIO IMPLÍCITO (NIVELES)</div>'
+        f'<div class="big mono">{mcap_str}</div>'
+        f'<p class="sub mono" style="margin-bottom:0">{precio_linea}</p>'
+        '<p class="sub" style="margin:6px 0 0">No es pronóstico de precio: el '
+        'ajuste puede venir por DMB o por crecimiento de las funciones del '
+        'dinero (MC2, RV12), que elevan el equilibrio.</p></div>')
+    oculto_brecha = "" if brecha else ' style="display:none"'
+
     # datos secundarios; si faltan archivos se degradan a canvas oculto
     raw_dir = pathlib.Path(monthly_csv).parent / "raw"
     sec = dict(
@@ -310,7 +412,8 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="big">{gap_nivel:+.0f}%</div>
 <p class="sub">({gap:+.1f} puntos log)</p>
 <div class="gauge"><i style="left:{max(2, min(94, 50 + gap / 2)):.0f}%;width:4%"></i><b></b></div>
-<p class="sub" style="margin-bottom:0">BTC {lado} vs su equilibrio · corrección {abs(r["ect"]["coef"]) * 100:.0f}%/mes · vida media {r["ect"]["half_life_m"]:.1f} meses</p></div>
+<p class="sub" style="margin-bottom:0">BTC {lado} vs su equilibrio · corrección {abs(r["ect"]["coef"]) * 100:.0f}%/mes · vida media {r["ect"]["half_life_m"]:.1f} meses</p>
+{contexto_brecha}</div>
 <div class="stack">
 <div class="card"><div class="lbl">RELACIÓN DE LARGO PLAZO</div>
 <p class="mono">DMB* = c + {lr["MC2"]["coef"]:.3f}·MC2{lr["MC2"]["stars"]} + {lr["RV12"]["coef"]:.3f}·RV12{lr["RV12"]["stars"]} + {lr["UC"]["coef"]:.3f}·UC{lr["UC"]["stars"]}</p></div>
@@ -322,10 +425,13 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="big mono">{r["ect"]["coef"]:.4f}</div>
 <p class="sub" style="margin-bottom:0">ECT, {_fmt_p(r["ect"]["p"])}</p></div>
 </div>
+{card_equilibrio}
 </div>
 </div>
 <div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><div class="cwrap"><canvas id="c_gap"></canvas></div>
 <p class="sub" style="margin-bottom:0">— tramo ámbar: M2 provisional (nowcast)</p></div>
+<div class="card"><div class="lbl">BRECHA HISTÓRICA (PTS LOG)</div><div class="cwrap"{oculto_brecha}><canvas id="c_brecha"></canvas></div>
+<p class="sub" style="margin-bottom:0">DMB − DMB* a lo largo de la muestra · línea cero y banda ±1σ sobre la media histórica</p></div>
 </section>
 <section id="{_ancla(SECCIONES[1])}"><h2>Variables</h2>
 <div class="two">
@@ -366,7 +472,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 </main>
 <footer>Generado {r["generated_at"]} · Modelo re-estimado con muestra {r["sample"][0]} → {r["sample"][1]} · Alonzo Niño Mendoza · Especificación congelada Calibrado 6D · <a href="{REPO_URL}">repositorio</a> · Los meses sin M2 publicado no entran a la estimación.</footer>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="{CHARTJS_SRI}" crossorigin="anonymous"></script>
-<script>{_script(r, sec)}</script></body></html>"""
+<script>{_script(r, sec, brecha)}</script></body></html>"""
     out = pathlib.Path(out)
     tmp = out.with_suffix(".tmp")
     tmp.write_text(html)
@@ -374,13 +480,17 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
     return out
 
 
-def _script(r, sec):
+def _script(r, sec, brecha=None):
     """Bloque JS: datos embebidos + charts. String normal (sin f-string) para
     no pelear con las llaves de JS."""
     R = json.dumps(dict(fechas=r["series"]["fechas"], dmb=r["series"]["dmb"],
                         dmb_star=r["series"]["dmb_star"]))
     NOWCAST = json.dumps(r["series"]["nowcast"])
     S = json.dumps(sec)
+    BR = json.dumps(dict(fechas=brecha["fechas"],
+                          valores=[round(x, 2) for x in brecha["gap_series"]],
+                          media=round(brecha["media"], 2),
+                          sd=round(brecha["sd"], 2))) if brecha else "null"
     ejes = ('{responsive:true,maintainAspectRatio:false,'
             'plugins:{legend:{labels:{color:"#6e6656"}}},'
             'scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681"}},'
@@ -403,6 +513,7 @@ def _script(r, sec):
 const R = __R__;
 const NOWCAST = __NOWCAST__;
 const S = __S__;
+const BR = __BR__;
 new Chart(document.getElementById("c_gap"), {type: "line", data: {labels: R.fechas,
  datasets: [{label: "DMB observado", data: R.dmb, borderColor: "#f7931a", pointRadius: 0, borderWidth: 2, spanGaps: false,
              segment: {borderColor: ctx => NOWCAST[ctx.p1DataIndex] ? "#e6b56a" : "#f7931a",
@@ -426,6 +537,13 @@ if (S.fees) new Chart(document.getElementById("c_fees"), {type: "line",
 if (S.price) new Chart(document.getElementById("c_price"), {type: "line",
  data: {labels: S.price.fechas, datasets: [{label: "precio BTC", data: S.price.valores, borderColor: "#f7931a", pointRadius: 0, borderWidth: 1.8, spanGaps: true}]},
  options: __EJES_LOG__});
+if (BR) new Chart(document.getElementById("c_brecha"), {type: "line",
+ data: {labels: BR.fechas, datasets: [
+   {label: "brecha", data: BR.valores, borderColor: "#f7931a", pointRadius: 0, borderWidth: 1.8, spanGaps: false},
+   {label: "cero", data: BR.valores.map(() => 0), borderColor: "#211d14", borderWidth: 1, pointRadius: 0, borderDash: [2, 2]},
+   {label: "+1s", data: BR.valores.map(() => BR.media + BR.sd), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [5, 4]},
+   {label: "-1s", data: BR.valores.map(() => BR.media - BR.sd), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [5, 4]}]},
+ options: __EJES_ANIOS__});
 const _secs = [...document.querySelectorAll("main section[id]")];
 const _links = new Map([...document.querySelectorAll("nav a")].map(a => [a.getAttribute("href").slice(1), a]));
 const _io = new IntersectionObserver(es => {
@@ -447,7 +565,7 @@ actualizarTicker();
 setInterval(actualizarTicker, 60000);  // spec §5.6: refresco cada 60s (limite libre de CoinGecko)
 """
     for tok, val in (("__R__", R), ("__NOWCAST__", NOWCAST), ("__S__", S),
-                     ("__EJES__", ejes), ("__EJES_ANIOS__", ejes_anios),
+                     ("__BR__", BR), ("__EJES__", ejes), ("__EJES_ANIOS__", ejes_anios),
                      ("__EJES_LOG__", ejes_log), ("__VARS_DS__", vars_ds)):
         js = js.replace(tok, val)
     return js
