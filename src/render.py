@@ -128,8 +128,9 @@ def _leer_vars(monthly_csv):
 
 
 def _leer_lecturas(monthly_csv):
-    """Última lectura no-NaN de cada variable + su mes y si ese mes es nowcast
-    (m2_published False). -> [(nombre, valor, mes, nowcast_bool)] o None."""
+    """Último publicado (última fila con m2_published True) vs Nowcast (última
+    fila con datos, si su mes difiere del publicado). -> dict con pub_mes/pub
+    y now_mes/now (None si no hay nowcast activo), o None si no hay datos."""
     p = pathlib.Path(monthly_csv)
     if not p.exists():
         return None
@@ -140,22 +141,80 @@ def _leer_lecturas(monthly_csv):
         return None
     if not rows:
         return None
-    out = []
-    for k in LECT_VARS:
-        ult = None
-        for row in rows:
+
+    def tiene_datos(row):
+        return any(row.get(k, "") not in ("", None) for k in LECT_VARS)
+
+    def valores(row):
+        out = {}
+        for k in LECT_VARS:
             v = row.get(k, "")
-            if v in ("", None):
-                continue
             try:
-                fv = float(v)
+                out[k] = round(float(v), 4) if v not in ("", None) else None
             except ValueError:
-                continue
-            now = str(row.get("m2_published", "True")).strip().lower() == "false"
-            ult = (k, fv, row["Fecha"][:7], now)
-        if ult:
-            out.append(ult)
-    return out or None
+                out[k] = None
+        return out
+
+    ultimo = next((row for row in reversed(rows) if tiene_datos(row)), None)
+    if ultimo is None:
+        return None
+    publicado = next(
+        (row for row in reversed(rows)
+         if tiene_datos(row)
+         and str(row.get("m2_published", "True")).strip().lower() != "false"),
+        None)
+    if publicado is None:
+        publicado = ultimo
+
+    nowcast = ultimo if publicado["Fecha"][:7] != ultimo["Fecha"][:7] else None
+    return dict(pub_mes=publicado["Fecha"][:7], pub=valores(publicado),
+                now_mes=(nowcast["Fecha"][:7] if nowcast else None),
+                now=(valores(nowcast) if nowcast else None))
+
+
+def _tabla_robustez(r):
+    """Card ROBUSTEZ DE LA ESPECIFICACIÓN: Base (0D) / Calibrado 6D / 8D, una
+    fila por especificación, con los mismos estadísticos. '' si no hay datos
+    de robustez (degradación T15)."""
+    rob = r.get("robustez") or {}
+    if not rob:
+        return ""
+    especs = []
+    if "base" in rob:
+        especs.append(("Base (0D)", rob["base"], False))
+    especs.append(("Calibrado 6D",
+                    dict(boundsF=r["boundsF"], ect=r["ect"], lr=r["lr"],
+                         n=r["n"], aic=None), True))
+    if "8D" in rob:
+        especs.append(("8D", rob["8D"], False))
+    if len(especs) < 2:
+        return ""
+
+    crit1 = r["crit"]["1%"][1]
+    cointegran = all(d["boundsF"] > crit1 for _, d, _ in especs)
+    ect_neg = all(d["ect"]["coef"] < 0 for _, d, _ in especs)
+    nota = ("La conclusión no depende de las dummies: la cointegración y los "
+            "signos se sostienen en las tres especificaciones (robustez del "
+            "Cap. 3).") if (cointegran and ect_neg) else \
+           "Comparación de especificaciones re-estimada semanalmente."
+
+    filas = "".join(
+        f'<tr><td>{"<b>" + nombre + "</b>" if bold else nombre}</td>'
+        f'<td class="num">{d["boundsF"]:.2f}</td>'
+        f'<td class="num">{d["ect"]["coef"]:.4f}</td>'
+        f'<td class="num">{d["lr"]["MC2"]["coef"]:.3f}{d["lr"]["MC2"]["stars"]}</td>'
+        f'<td class="num">{d["lr"]["RV12"]["coef"]:.3f}{d["lr"]["RV12"]["stars"]}</td>'
+        f'<td class="num">{d["lr"]["UC"]["coef"]:.3f}{d["lr"]["UC"]["stars"]}</td>'
+        f'<td class="num">{d["n"]}</td>'
+        f'<td class="num">{f"{d['aic']:.2f}" if d.get("aic") is not None else "—"}</td></tr>'
+        for nombre, d, bold in especs)
+    return (
+        '<div class="card"><div class="lbl">ROBUSTEZ DE LA ESPECIFICACIÓN</div>'
+        '<table><tr><th>Especificación</th><th class="num">Bounds F</th>'
+        '<th class="num">ECT</th><th class="num">MC2</th><th class="num">RV12</th>'
+        '<th class="num">UC</th><th class="num">n</th><th class="num">AIC</th></tr>'
+        f'{filas}</table>'
+        f'<p class="sub" style="margin:10px 0 0">{nota}</p></div>')
 
 
 def _leer_mercado(monthly_csv):
@@ -308,19 +367,28 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         f'<td><span class="pill {"ok" if v["status"] == "FRESCO" else "warn" if v["status"] == "STALE" else "bad"}">{v["status"]}</span></td></tr>'
         for k, v in freshness.items())
 
-    # ÚLTIMAS LECTURAS (Variables, columna derecha)
-    lecturas = _leer_lecturas(monthly_csv)
-    if lecturas:
+    # ÚLTIMAS LECTURAS (Variables, columna derecha): publicado vs nowcast
+    lect = _leer_lecturas(monthly_csv)
+    if lect:
+        con_nowcast = lect["now"] is not None
+        cab_now = (f'<th class="num">Nowcast <span class="pill warn">NOWCAST</span>'
+                   f'<br><span class="mono" style="font-weight:400;color:var(--dim)">'
+                   f'{lect["now_mes"]}</span></th>') if con_nowcast else ""
         filas_lect = "".join(
-            f'<tr><td>{k}</td><td class="num">{val:.4f}</td>'
-            f'<td class="mono" style="color:var(--dim)">{mes}</td>'
-            f'<td>{"<span class=\"pill warn\">NOWCAST</span>" if now else ""}</td></tr>'
-            for k, val, mes, now in lecturas)
-        card_lect = (f'<div class="card"><div class="lbl">ÚLTIMAS LECTURAS</div>'
-                     f'<table><tr><th>Serie</th><th class="num">Valor</th>'
-                     f'<th>Mes</th><th></th></tr>{filas_lect}</table>'
-                     f'<p class="sub" style="margin:10px 0 0">NOWCAST = M2 aún '
-                     f'provisional; no entra a la estimación.</p></div>')
+            f'<tr><td>{k}</td><td class="num mono">'
+            f'{f"{lect['pub'][k]:.4f}" if lect["pub"][k] is not None else "—"}</td>'
+            + (f'<td class="num mono">'
+               f'{f"{lect['now'][k]:.4f}" if con_nowcast and lect["now"][k] is not None else "—"}</td>'
+               if con_nowcast else "")
+            + '</tr>'
+            for k in LECT_VARS)
+        card_lect = (
+            '<div class="card"><div class="lbl">ÚLTIMAS LECTURAS</div>'
+            f'<table><tr><th>Serie</th><th class="num">Último publicado'
+            f'<br><span class="mono" style="font-weight:400;color:var(--dim)">'
+            f'{lect["pub_mes"]}</span></th>{cab_now}</tr>{filas_lect}</table>'
+            '<p class="sub" style="margin:10px 0 0">NOWCAST = M2 aún '
+            'provisional; no entra a la estimación.</p></div>')
     else:
         card_lect = ('<div class="card"><div class="lbl">ÚLTIMAS LECTURAS</div>'
                      '<p class="sub">Sin lecturas disponibles.</p></div>')
@@ -366,6 +434,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         'ajuste puede venir por DMB o por crecimiento de las funciones del '
         'dinero (MC2, RV12), que elevan el equilibrio.</p></div>')
     oculto_brecha = "" if brecha else ' style="display:none"'
+    card_robustez = _tabla_robustez(r)
 
     # datos secundarios; si faltan archivos se degradan a canvas oculto
     raw_dir = pathlib.Path(monthly_csv).parent / "raw"
@@ -442,7 +511,8 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="card"><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
 {"".join(f'<tr><td>{n}</td><td class="num">{c[0]:.3f}</td><td class="num">{c[1]:.3f}</td><td class="num">{r["boundsF"]:.2f}</td></tr>' for n, c in r["crit"].items())}
 </table></div>
-{card_diag}</div></section>
+{card_diag}</div>
+{card_robustez}</section>
 <section id="{_ancla(SECCIONES[3])}"><h2>Funciones del dinero</h2>
 <div class="grid">{cards_fn}</div>
 <div class="card half"><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr>{filas_lr}</table></div></section>
@@ -467,7 +537,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <section id="{_ancla(SECCIONES[6])}"><h2>Datos</h2>
 <div class="two">
 <div class="card"><table><tr><th>Serie</th><th>Última fecha</th><th>Estado</th></tr>{filas_datos}</table></div>
-<div class="card"><div class="lbl">FUENTES CITABLES</div><p class="sub" style="margin-bottom:0">blockchain.info (on-chain), Stooq / Yahoo Finance (oro), FRED · M2SL, CoinGecko (precio y dominancia vivos), y semilla histórica de dominancia validada en la tesis. Código y datos: <a href="{REPO_URL}">github.com/AlonzoBenz/BitcoinTerminal</a></p></div>
+<div class="card"><div class="lbl">FUENTES CITABLES</div><p class="sub" style="margin-bottom:0">blockchain.info (on-chain), Stooq / Yahoo Finance (oro), FRED · M2SL, CoinGecko (precio y dominancia vivos), y semilla histórica de dominancia validada en la tesis. Código y datos: <a href="{REPO_URL}">github.com/AlonzoBenz/BitcoinTerminal</a><br>Metodología: ARDL-Bounds (Pesaran, Shin &amp; Smith, 2001), caso 5. Especificación y diseño: docs/superpowers/specs/ en el repositorio.</p></div>
 </div></section>
 </main>
 <footer>Generado {r["generated_at"]} · Modelo re-estimado con muestra {r["sample"][0]} → {r["sample"][1]} · Alonzo Niño Mendoza · Especificación congelada Calibrado 6D · <a href="{REPO_URL}">repositorio</a> · Los meses sin M2 publicado no entran a la estimación.</footer>

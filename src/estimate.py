@@ -4,6 +4,7 @@ genera 'alertas' en vez de esconder cambios de conclusion."""
 import datetime as dt
 import json
 import pathlib
+import sys
 import numpy as np
 import pandas as pd
 from src.model.model import fit, CRIT, stars
@@ -41,6 +42,19 @@ def run(monthly_csv="data/monthly.csv", out="data/results.json"):
     gap_hoy = float(g.iloc[-1])
     gap_fecha = str(g.index[-1].date())
 
+    robustez = {}
+    for which in ("base", "8D"):
+        try:
+            rm = fit(which, path=est_path)
+            robustez[which] = dict(
+                boundsF=rm["boundsF"],
+                ect=dict(coef=rm["ect"]["coef"], p=rm["ect"]["p"]),
+                lr={k: dict(coef=d["coef"], p=d["p"], stars=stars(d["p"])) for k, d in rm["lr"].items()},
+                n=rm["n"], aic=rm["aic"],
+            )
+        except Exception as e:
+            print(f"[robustez] {which} fallo: {type(e).__name__}", file=sys.stderr)
+
     r = dict(
         generated_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         n=m["n"], r2adj=m["r2adj"], dw=m["dw"], boundsF=m["boundsF"], crit=CRIT,
@@ -56,5 +70,6 @@ def run(monthly_csv="data/monthly.csv", out="data/results.json"):
                     nowcast=[bool(not v) for v in df.get("m2_published", pd.Series(True, index=df.index))]),
         alertas=alertas,
     )
+    r["robustez"] = robustez
     pathlib.Path(out).write_text(json.dumps(r, indent=1))
     return r

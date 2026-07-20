@@ -16,7 +16,8 @@ def test_html_contiene_lo_esencial(tmp_path):
                  'integrity="sha384-', "puntos log", "spanGaps",
                  "og:title", 'rel="icon"', "c_price", "setInterval",
                  "Percentil", "EQUILIBRIO IMPLÍCITO", "BRECHA HISTÓRICA",
-                 "No es pronóstico"):
+                 "No es pronóstico", "ROBUSTEZ DE LA ESPECIFICACIÓN",
+                 "Último publicado", "Pesaran"):
         assert frag in html, frag
 
 

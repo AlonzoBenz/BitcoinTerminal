@@ -14,3 +14,5 @@ def test_results_json_estructura(tmp_path):
     assert r["boundsF"] > r["crit"]["1%"][1]          # cointegra al 1%
     assert r["ect"]["coef"] < 0
     assert len(r["series"]["fechas"]) == len(r["series"]["dmb"]) == len(r["series"]["dmb_star"])
+    assert "robustez" in r
+    assert "base" in r["robustez"]
