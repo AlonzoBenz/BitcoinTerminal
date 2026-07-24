@@ -55,9 +55,10 @@ font-variant-numeric:tabular-nums}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;
 margin-bottom:14px}
 .grid .card,.hero .card,.stack .card,.mini .card,.two .card,.g2x2 .card{margin:0}
-.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start;
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:stretch;
 margin-bottom:14px}
-.stack{display:grid;gap:16px;align-content:start}
+.stack{display:grid;grid-template-rows:auto 1fr;gap:16px;align-content:stretch}
+.stack > .card:last-child{display:flex;flex-direction:column;justify-content:center}
 .mini{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .two{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;
 margin-bottom:14px}
