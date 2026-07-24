@@ -45,11 +45,13 @@ h2{font-family:Fraunces,serif;font-size:21px;font-weight:500;margin:44px 0 14px;
 padding-top:14px;border-top:1px solid var(--line)}
 .sub{color:var(--dim);font-size:13px;margin-bottom:22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;
-padding:16px 20px;margin-bottom:14px}
+padding:16px 20px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:#d8cbb0;box-shadow:0 1px 8px rgba(33,29,20,.05)}
 .lbl{font-size:10.5px;letter-spacing:1.6px;color:var(--faint);margin-bottom:8px}
-.big{font-family:Fraunces,serif;font-size:30px;font-weight:500}
+.big{font-family:Fraunces,serif;font-size:30px;font-weight:500;
+font-variant-numeric:tabular-nums}
 .star .big{font-size:46px;line-height:1.05;color:var(--btctx)}
-.mono{font-family:'IBM Plex Mono',monospace}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;
 margin-bottom:14px}
 .grid .card,.hero .card,.stack .card,.mini .card,.two .card,.g2x2 .card{margin:0}
@@ -71,11 +73,45 @@ white-space:nowrap}
 .gauge b{position:absolute;left:50%;top:-3px;width:2px;height:14px;background:var(--ink)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 td,th{padding:6px 10px 6px 0;text-align:left;border-bottom:1px solid var(--line)}
+td{font-variant-numeric:tabular-nums}
 .num{font-family:'IBM Plex Mono',monospace;text-align:right}
 .alerta{background:var(--warnbg);border:1px solid #fac775;color:var(--warn);
 border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13.5px}
 .cwrap{position:relative;height:280px}
 .cwrap.sm{height:200px}
+.cwrap.spark{height:72px;margin-top:12px}
+section{scroll-margin-top:90px}
+.statusbar{display:flex;justify-content:space-between;align-items:center;gap:10px;
+background:#f2ede1;border-bottom:1px solid var(--line);padding:6px 4vw;flex-wrap:wrap}
+.live{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
+font-size:10px;letter-spacing:2px;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);
+animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(59,109,17,.5)}
+70%{box-shadow:0 0 0 6px rgba(59,109,17,0)}100%{box-shadow:0 0 0 0 rgba(59,109,17,0)}}
+.statusbar .meta{font-family:'IBM Plex Mono',monospace;color:var(--dim);
+font-size:11px;text-align:right}
+.verdict{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:6px 0 22px}
+.verdict .lead{color:var(--dim);font-size:13px}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:11px;border-radius:99px;
+padding:3px 12px;border:1px solid;white-space:nowrap;
+font-variant-numeric:tabular-nums}
+.chip.yes{background:#eaf3de;border-color:#c0dd97;color:#3b6d11}
+.chip.no{background:#f2ede1;border-color:var(--line);color:var(--dim)}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);padding:0;overflow:hidden}
+.kpi{padding:14px 18px;border-left:1px solid var(--line)}
+.kpi:first-child{border-left:0}
+.kpi .kl{font-size:9.5px;letter-spacing:1.6px;color:var(--faint);
+text-transform:uppercase;margin-bottom:6px}
+.kpi .kv{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--ink);
+font-variant-numeric:tabular-nums}
+.kpi .kv.ok{color:var(--ok)}
+.kpi .kv.warn{color:var(--warn)}
+.kpi .ksub{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--dim);
+margin-top:3px;font-variant-numeric:tabular-nums}
+.idx{font-family:'IBM Plex Mono',monospace;font-size:.55em;color:var(--faint);
+font-weight:400;margin-right:10px;vertical-align:middle;
+font-variant-numeric:tabular-nums}
 footer{color:var(--faint);font-size:11.5px;padding:20px 4vw;border-top:1px solid var(--line)}
 footer a{color:var(--btctx);text-decoration:none}
 @media (max-width:900px){
@@ -85,6 +121,17 @@ header{flex-wrap:wrap;gap:8px}
 nav{gap:10px 12px;font-size:11px}
 h1{font-size:26px}
 .star .big{font-size:40px}
+.kpis{grid-template-columns:1fr 1fr 1fr}
+.kpi{border-top:1px solid var(--line)}
+.kpi:nth-child(-n+3){border-top:0}
+.kpi:nth-child(3n+1){border-left:0}
+}
+@media (max-width:560px){
+.kpis{grid-template-columns:1fr 1fr}
+.kpi:nth-child(-n+2){border-top:0}
+.kpi:nth-child(3){border-top:1px solid var(--line)}
+.kpi:nth-child(odd){border-left:0}
+.kpi:nth-child(even){border-left:1px solid var(--line)}
 }
 """
 
@@ -96,6 +143,16 @@ VARS_PALETA = {"DMB": "#f7931a", "MC2": "#a09681", "MC1": "#8a7a5c",
                "RV12": "#6e6656", "UC": "#c9bfa6"}
 
 LECT_VARS = ("DMB", "MC2", "MC1", "RV12", "UC")
+
+# glosario para tooltips nativos (title="…") sobre las etiquetas de variables
+GLOSARIO = {
+    "DMB": "log(MarketCap BTC / M2): monetización de Bitcoin",
+    "MC2": "log(Volumen tx USD / M2): medio de cambio",
+    "MC1": "log(tx / oferta): frecuencia transaccional",
+    "RV12": "momentum 12m de BTC vs oro: reserva de valor",
+    "UC": "logit(dominancia BTC): unidad de cuenta",
+    "ECT": "término de corrección de error: velocidad de ajuste al equilibrio",
+}
 
 
 def _ancla(s):
@@ -362,6 +419,33 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         f'<div class="card"><div class="lbl">{n} · {v}</div>'
         f'<span class="pill {"ok" if sig else "bad"}">{"CUMPLE" if sig else "NO SIGNIFICATIVA"}</span></div>'
         for n, v, sig in funciones)
+
+    # VERDICTO (chips bajo el subtítulo del H1): reutiliza `funciones`
+    verdict_chips = "".join(
+        f'<span class="chip {"yes" if sig else "no"}">{n} {"✓" if sig else "n.s."}</span>'
+        for n, _v, sig in funciones)
+
+    # PANEL DE INSTRUMENTOS (KPI strip) al inicio de la sección El modelo
+    sample_yrs = f'{r["sample"][0][:4]}–{r["sample"][1][:4]}'
+    kpis_html = (
+        '<div class="card kpis">'
+        f'<div class="kpi"><div class="kl">Veredicto</div>'
+        f'<div class="kv {"ok" if cointegra else "warn"}">'
+        f'{"SÍ cointegra" if cointegra else "en duda"}</div></div>'
+        f'<div class="kpi"><div class="kl">Bounds F</div>'
+        f'<div class="kv">{r["boundsF"]:.2f}</div></div>'
+        f'<div class="kpi"><div class="kl" title="{GLOSARIO["ECT"]}">ECT</div>'
+        f'<div class="kv">{r["ect"]["coef"]:.3f}</div>'
+        f'<div class="ksub">vida media {r["ect"]["half_life_m"]:.1f} m</div></div>'
+        f'<div class="kpi"><div class="kl">Muestra</div>'
+        f'<div class="kv">{sample_yrs}</div></div>'
+        f'<div class="kpi"><div class="kl">Observaciones</div>'
+        f'<div class="kv">n = {r["n"]}</div></div>'
+        f'<div class="kpi"><div class="kl">R² ajustada</div>'
+        f'<div class="kv">{r["r2adj"]:.3f}</div></div>'
+        '</div>')
+
+    trend_glyph = "▲" if gap > 0 else "▼"
     filas_datos = "".join(
         f'<tr><td>{k}</td><td>{v["last"]}</td>'
         f'<td><span class="pill {"ok" if v["status"] == "FRESCO" else "warn" if v["status"] == "STALE" else "bad"}">{v["status"]}</span></td></tr>'
@@ -375,7 +459,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
                    f'<br><span class="mono" style="font-weight:400;color:var(--dim)">'
                    f'{lect["now_mes"]}</span></th>') if con_nowcast else ""
         filas_lect = "".join(
-            f'<tr><td>{k}</td><td class="num mono">'
+            f'<tr><td title="{GLOSARIO.get(k, "")}">{k}</td><td class="num mono">'
             f'{f"{lect['pub'][k]:.4f}" if lect["pub"][k] is not None else "—"}</td>'
             + (f'<td class="num mono">'
                f'{f"{lect['now'][k]:.4f}" if con_nowcast and lect["now"][k] is not None else "—"}</td>'
@@ -471,52 +555,54 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>{CSS}</style></head><body>
 <header><div class="wordmark">₿<b>itcoin</b> Terminal</div><nav>{nav}</nav></header>
+<div class="statusbar"><span class="live"><span class="dot"></span>EN VIVO</span>
+<span class="meta">Modelo re-estimado {r["generated_at"][:10]} · muestra {r["sample"][0]} → {r["sample"][1]} · n={r["n"]} · datos frescos</span></div>
 <main>
 <section id="{_ancla(SECCIONES[0])}">
-<h1>¿Es Bitcoin dinero?</h1>
-<p class="sub">Evidencia de cointegración ARDL — Calibrado 6D, {r["sample"][0]} → {r["sample"][1]} (n={r["n"]}) · UNAM, Facultad de Economía</p>
+<h1><span class="idx">01</span>¿Es Bitcoin dinero?</h1>
+<p class="sub" style="margin-bottom:10px">Evidencia de cointegración ARDL — Calibrado 6D, {r["sample"][0]} → {r["sample"][1]} (n={r["n"]}) · UNAM, Facultad de Economía</p>
+<div class="verdict"><span class="lead">El modelo responde:</span>{verdict_chips}</div>
 {alertas}
+{kpis_html}
 <div class="hero">
 <div class="card star"><div class="lbl">BRECHA DE MONETIZACIÓN · {r["gap"]["fecha"]}</div>
-<div class="big">{gap_nivel:+.0f}%</div>
+<div class="big"><span style="color:#c46f0a">{trend_glyph}</span> {gap_nivel:+.0f}%</div>
 <p class="sub">({gap:+.1f} puntos log)</p>
 <div class="gauge"><i style="left:{max(2, min(94, 50 + gap / 2)):.0f}%;width:4%"></i><b></b></div>
 <p class="sub" style="margin-bottom:0">BTC {lado} vs su equilibrio · corrección {abs(r["ect"]["coef"]) * 100:.0f}%/mes · vida media {r["ect"]["half_life_m"]:.1f} meses</p>
-{contexto_brecha}</div>
+{contexto_brecha}
+<div class="cwrap spark"{oculto_brecha}><canvas id="c_gap_spark"></canvas></div></div>
 <div class="stack">
 <div class="card"><div class="lbl">RELACIÓN DE LARGO PLAZO</div>
 <p class="mono">DMB* = c + {lr["MC2"]["coef"]:.3f}·MC2{lr["MC2"]["stars"]} + {lr["RV12"]["coef"]:.3f}·RV12{lr["RV12"]["stars"]} + {lr["UC"]["coef"]:.3f}·UC{lr["UC"]["stars"]}</p></div>
-<div class="mini">
-<div class="card"><div class="lbl">COINTEGRACIÓN</div>
-<div class="big mono">F = {r["boundsF"]:.2f}</div>
-<span class="pill {"ok" if cointegra else "bad"}">{"SÍ · supera I(1) al 1%" if cointegra else "EN DUDA"}</span></div>
-<div class="card"><div class="lbl">VELOCIDAD DE AJUSTE</div>
-<div class="big mono">{r["ect"]["coef"]:.4f}</div>
-<p class="sub" style="margin-bottom:0">ECT, {_fmt_p(r["ect"]["p"])}</p></div>
-</div>
 {card_equilibrio}
 </div>
 </div>
 <div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><div class="cwrap"><canvas id="c_gap"></canvas></div>
 <p class="sub" style="margin-bottom:0">— tramo ámbar: M2 provisional (nowcast)</p></div>
-<div class="card"><div class="lbl">BRECHA HISTÓRICA (PTS LOG)</div><div class="cwrap"{oculto_brecha}><canvas id="c_brecha"></canvas></div>
-<p class="sub" style="margin-bottom:0">DMB − DMB* a lo largo de la muestra · línea cero y banda ±1σ sobre la media histórica</p></div>
 </section>
-<section id="{_ancla(SECCIONES[1])}"><h2>Variables</h2>
+<section id="{_ancla(SECCIONES[1])}"><h2><span class="idx">02</span>Variables</h2>
+<p class="sub">Las cinco variables del modelo. DMB es la monetización de BTC frente a M2; MC2, MC1, RV12 y UC son las funciones del dinero.</p>
 <div class="two">
-<div class="card"><div class="cwrap"{oculto["vars"]}><canvas id="c_vars"></canvas></div><p class="sub" style="margin-bottom:0">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div>
+<div class="card"><div class="lbl">SERIES DEL MODELO (2015–HOY)</div><div class="cwrap"{oculto["vars"]}><canvas id="c_vars"></canvas></div><p class="sub" style="margin-bottom:0">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div>
 {card_lect}</div></section>
-<section id="{_ancla(SECCIONES[2])}"><h2>Cointegración</h2>
+<section id="{_ancla(SECCIONES[2])}"><h2><span class="idx">03</span>Cointegración</h2>
+<p class="sub">¿Hay una relación de equilibrio estable de largo plazo? El test de límites lo decide: F por encima del valor crítico I(1) = sí.</p>
 <div class="two">
-<div class="card"><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
+<div class="card"><div class="lbl">PRUEBA DE COINTEGRACIÓN (BOUNDS)</div><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
 {"".join(f'<tr><td>{n}</td><td class="num">{c[0]:.3f}</td><td class="num">{c[1]:.3f}</td><td class="num">{r["boundsF"]:.2f}</td></tr>' for n, c in r["crit"].items())}
 </table></div>
 {card_diag}</div>
-{card_robustez}</section>
-<section id="{_ancla(SECCIONES[3])}"><h2>Funciones del dinero</h2>
+{card_robustez}
+<div class="card"><div class="lbl">BRECHA HISTÓRICA (PTS LOG)</div><div class="cwrap"{oculto_brecha}><canvas id="c_brecha"></canvas></div>
+<p class="sub" style="margin-bottom:0">DMB − DMB* a lo largo de la muestra · línea cero y banda ±1σ sobre la media histórica</p></div>
+</section>
+<section id="{_ancla(SECCIONES[3])}"><h2><span class="idx">04</span>Funciones del dinero</h2>
+<p class="sub">Cada coeficiente de largo plazo dice si BTC cumple esa función del dinero de forma estadísticamente significativa.</p>
 <div class="grid">{cards_fn}</div>
-<div class="card half"><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr>{filas_lr}</table></div></section>
-<section id="{_ancla(SECCIONES[4])}"><h2>Hechos estilizados</h2>
+<div class="card half"><div class="lbl">COEFICIENTES DE LARGO PLAZO</div><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr>{filas_lr}</table></div></section>
+<section id="{_ancla(SECCIONES[4])}"><h2><span class="idx">05</span>Hechos estilizados</h2>
+<p class="sub">Los hechos del Capítulo 1, en vivo: adopción, escasez y costos de la red.</p>
 <div class="g2x2">
 <div class="card"><div class="lbl">TRANSACCIONES / MES</div><div class="cwrap sm"{oculto["tx"]}><canvas id="c_tx"></canvas></div></div>
 <div class="card"><div class="lbl">OFERTA DE BTC</div><div class="cwrap sm"{oculto["supply"]}><canvas id="c_supply"></canvas></div></div>
@@ -525,7 +611,8 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 </div>
 <div class="card"><div class="lbl">PRECIO BTC (LOG)</div><div class="cwrap"{oculto["price"]}><canvas id="c_price"></canvas></div>
 <p class="sub" style="margin-bottom:0">El hecho estilizado más citado de la tesis · escala logarítmica</p></div></section>
-<section id="{_ancla(SECCIONES[5])}"><h2>Mercado</h2>
+<section id="{_ancla(SECCIONES[5])}"><h2><span class="idx">06</span>Mercado</h2>
+<p class="sub">Precio y dominancia en tiempo real; tu navegador consulta CoinGecko directamente.</p>
 <div class="grid">
 <div class="card" id="ticker"><div class="lbl">PRECIO BTC · EN VIVO</div>
 <p class="big mono" id="tk_price">{px_init}</p><p class="sub" style="margin-bottom:0">CoinGecko al abrir; si falla, valor del build</p></div>
@@ -534,9 +621,10 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="card"><div class="lbl">OFERTA EN CIRCULACIÓN · AL BUILD</div>
 <p class="big mono">{sup_init}</p><p class="sub" style="margin-bottom:0">BTC minados a {sup_fecha}</p></div>
 </div></section>
-<section id="{_ancla(SECCIONES[6])}"><h2>Datos</h2>
+<section id="{_ancla(SECCIONES[6])}"><h2><span class="idx">07</span>Datos</h2>
+<p class="sub">De dónde viene cada serie y qué tan fresca está.</p>
 <div class="two">
-<div class="card"><table><tr><th>Serie</th><th>Última fecha</th><th>Estado</th></tr>{filas_datos}</table></div>
+<div class="card"><div class="lbl">FRESCURA POR SERIE</div><table><tr><th>Serie</th><th>Última fecha</th><th>Estado</th></tr>{filas_datos}</table></div>
 <div class="card"><div class="lbl">FUENTES CITABLES</div><p class="sub" style="margin-bottom:0">blockchain.info (on-chain), Stooq / Yahoo Finance (oro), FRED · M2SL, CoinGecko (precio y dominancia vivos), y semilla histórica de dominancia validada en la tesis. Código y datos: <a href="{REPO_URL}">github.com/AlonzoBenz/BitcoinTerminal</a><br>Metodología: ARDL-Bounds (Pesaran, Shin &amp; Smith, 2001), caso 5. Especificación y diseño: docs/superpowers/specs/ en el repositorio.</p></div>
 </div></section>
 </main>
@@ -575,6 +663,9 @@ def _script(r, sec, brecha=None):
                 'scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",'
                 'callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},'
                 'y:{type:"logarithmic",ticks:{color:"#a09681"}}}}')
+    ejes_spark = ('{responsive:true,maintainAspectRatio:false,'
+                  'plugins:{legend:{display:false},tooltip:{enabled:false}},'
+                  'scales:{x:{display:false},y:{display:false}}}')
     vars_ds = ",".join(
         '{label:"' + k + '",data:S.vars.' + k + ',borderColor:"' + c
         + '",pointRadius:0,borderWidth:1.2,spanGaps:false}'
@@ -614,6 +705,11 @@ if (BR) new Chart(document.getElementById("c_brecha"), {type: "line",
    {label: "+1s", data: BR.valores.map(() => BR.media + BR.sd), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [5, 4]},
    {label: "-1s", data: BR.valores.map(() => BR.media - BR.sd), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [5, 4]}]},
  options: __EJES_ANIOS__});
+if (BR) new Chart(document.getElementById("c_gap_spark"), {type: "line",
+ data: {labels: BR.fechas, datasets: [
+   {label: "brecha", data: BR.valores, borderColor: "#f7931a", pointRadius: 0, borderWidth: 1.2, spanGaps: false},
+   {label: "cero", data: BR.valores.map(() => 0), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [3, 3]}]},
+ options: __EJES_SPARK__});
 const _secs = [...document.querySelectorAll("main section[id]")];
 const _links = new Map([...document.querySelectorAll("nav a")].map(a => [a.getAttribute("href").slice(1), a]));
 const _io = new IntersectionObserver(es => {
@@ -636,6 +732,7 @@ setInterval(actualizarTicker, 60000);  // spec §5.6: refresco cada 60s (limite 
 """
     for tok, val in (("__R__", R), ("__NOWCAST__", NOWCAST), ("__S__", S),
                      ("__BR__", BR), ("__EJES__", ejes), ("__EJES_ANIOS__", ejes_anios),
-                     ("__EJES_LOG__", ejes_log), ("__VARS_DS__", vars_ds)):
+                     ("__EJES_LOG__", ejes_log), ("__EJES_SPARK__", ejes_spark),
+                     ("__VARS_DS__", vars_ds)):
         js = js.replace(tok, val)
     return js

@@ -17,7 +17,9 @@ def test_html_contiene_lo_esencial(tmp_path):
                  "og:title", 'rel="icon"', "c_price", "setInterval",
                  "Percentil", "EQUILIBRIO IMPLÍCITO", "BRECHA HISTÓRICA",
                  "No es pronóstico", "ROBUSTEZ DE LA ESPECIFICACIÓN",
-                 "Último publicado", "Pesaran"):
+                 "Último publicado", "Pesaran",
+                 "EN VIVO", "El modelo responde", "PRUEBA DE COINTEGRACIÓN",
+                 "c_gap_spark", "SERIES DEL MODELO"):
         assert frag in html, frag
 
 

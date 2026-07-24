@@ -30,11 +30,13 @@ h2{font-family:Fraunces,serif;font-size:21px;font-weight:500;margin:44px 0 14px;
 padding-top:14px;border-top:1px solid var(--line)}
 .sub{color:var(--dim);font-size:13px;margin-bottom:22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;
-padding:16px 20px;margin-bottom:14px}
+padding:16px 20px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:#d8cbb0;box-shadow:0 1px 8px rgba(33,29,20,.05)}
 .lbl{font-size:10.5px;letter-spacing:1.6px;color:var(--faint);margin-bottom:8px}
-.big{font-family:Fraunces,serif;font-size:30px;font-weight:500}
+.big{font-family:Fraunces,serif;font-size:30px;font-weight:500;
+font-variant-numeric:tabular-nums}
 .star .big{font-size:46px;line-height:1.05;color:var(--btctx)}
-.mono{font-family:'IBM Plex Mono',monospace}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;
 margin-bottom:14px}
 .grid .card,.hero .card,.stack .card,.mini .card,.two .card,.g2x2 .card{margin:0}
@@ -56,11 +58,45 @@ white-space:nowrap}
 .gauge b{position:absolute;left:50%;top:-3px;width:2px;height:14px;background:var(--ink)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 td,th{padding:6px 10px 6px 0;text-align:left;border-bottom:1px solid var(--line)}
+td{font-variant-numeric:tabular-nums}
 .num{font-family:'IBM Plex Mono',monospace;text-align:right}
 .alerta{background:var(--warnbg);border:1px solid #fac775;color:var(--warn);
 border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13.5px}
 .cwrap{position:relative;height:280px}
 .cwrap.sm{height:200px}
+.cwrap.spark{height:72px;margin-top:12px}
+section{scroll-margin-top:90px}
+.statusbar{display:flex;justify-content:space-between;align-items:center;gap:10px;
+background:#f2ede1;border-bottom:1px solid var(--line);padding:6px 4vw;flex-wrap:wrap}
+.live{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
+font-size:10px;letter-spacing:2px;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);
+animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(59,109,17,.5)}
+70%{box-shadow:0 0 0 6px rgba(59,109,17,0)}100%{box-shadow:0 0 0 0 rgba(59,109,17,0)}}
+.statusbar .meta{font-family:'IBM Plex Mono',monospace;color:var(--dim);
+font-size:11px;text-align:right}
+.verdict{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:6px 0 22px}
+.verdict .lead{color:var(--dim);font-size:13px}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:11px;border-radius:99px;
+padding:3px 12px;border:1px solid;white-space:nowrap;
+font-variant-numeric:tabular-nums}
+.chip.yes{background:#eaf3de;border-color:#c0dd97;color:#3b6d11}
+.chip.no{background:#f2ede1;border-color:var(--line);color:var(--dim)}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);padding:0;overflow:hidden}
+.kpi{padding:14px 18px;border-left:1px solid var(--line)}
+.kpi:first-child{border-left:0}
+.kpi .kl{font-size:9.5px;letter-spacing:1.6px;color:var(--faint);
+text-transform:uppercase;margin-bottom:6px}
+.kpi .kv{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--ink);
+font-variant-numeric:tabular-nums}
+.kpi .kv.ok{color:var(--ok)}
+.kpi .kv.warn{color:var(--warn)}
+.kpi .ksub{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--dim);
+margin-top:3px;font-variant-numeric:tabular-nums}
+.idx{font-family:'IBM Plex Mono',monospace;font-size:.55em;color:var(--faint);
+font-weight:400;margin-right:10px;vertical-align:middle;
+font-variant-numeric:tabular-nums}
 footer{color:var(--faint);font-size:11.5px;padding:20px 4vw;border-top:1px solid var(--line)}
 footer a{color:var(--btctx);text-decoration:none}
 @media (max-width:900px){
@@ -70,55 +106,68 @@ header{flex-wrap:wrap;gap:8px}
 nav{gap:10px 12px;font-size:11px}
 h1{font-size:26px}
 .star .big{font-size:40px}
+.kpis{grid-template-columns:1fr 1fr 1fr}
+.kpi{border-top:1px solid var(--line)}
+.kpi:nth-child(-n+3){border-top:0}
+.kpi:nth-child(3n+1){border-left:0}
+}
+@media (max-width:560px){
+.kpis{grid-template-columns:1fr 1fr}
+.kpi:nth-child(-n+2){border-top:0}
+.kpi:nth-child(3){border-top:1px solid var(--line)}
+.kpi:nth-child(odd){border-left:0}
+.kpi:nth-child(even){border-left:1px solid var(--line)}
 }
 </style></head><body>
 <header><div class="wordmark">₿<b>itcoin</b> Terminal</div><nav><a href="#el-modelo">El modelo</a><a href="#variables">Variables</a><a href="#cointegracion">Cointegración</a><a href="#funciones-del-dinero">Funciones del dinero</a><a href="#hechos-estilizados">Hechos estilizados</a><a href="#mercado">Mercado</a><a href="#datos">Datos</a></nav></header>
+<div class="statusbar"><span class="live"><span class="dot"></span>EN VIVO</span>
+<span class="meta">Modelo re-estimado 2026-07-20 · muestra 2016-01-01 → 2026-05-01 · n=125 · datos frescos</span></div>
 <main>
 <section id="el-modelo">
-<h1>¿Es Bitcoin dinero?</h1>
-<p class="sub">Evidencia de cointegración ARDL — Calibrado 6D, 2016-01-01 → 2026-05-01 (n=125) · UNAM, Facultad de Economía</p>
+<h1><span class="idx">01</span>¿Es Bitcoin dinero?</h1>
+<p class="sub" style="margin-bottom:10px">Evidencia de cointegración ARDL — Calibrado 6D, 2016-01-01 → 2026-05-01 (n=125) · UNAM, Facultad de Economía</p>
+<div class="verdict"><span class="lead">El modelo responde:</span><span class="chip yes">Reserva de valor ✓</span><span class="chip yes">Medio de cambio ✓</span><span class="chip no">Unidad de cuenta n.s.</span></div>
 
+<div class="card kpis"><div class="kpi"><div class="kl">Veredicto</div><div class="kv ok">SÍ cointegra</div></div><div class="kpi"><div class="kl">Bounds F</div><div class="kv">46.02</div></div><div class="kpi"><div class="kl" title="término de corrección de error: velocidad de ajuste al equilibrio">ECT</div><div class="kv">-0.254</div><div class="ksub">vida media 2.4 m</div></div><div class="kpi"><div class="kl">Muestra</div><div class="kv">2016–2026</div></div><div class="kpi"><div class="kl">Observaciones</div><div class="kv">n = 125</div></div><div class="kpi"><div class="kl">R² ajustada</div><div class="kv">0.998</div></div></div>
 <div class="hero">
 <div class="card star"><div class="lbl">BRECHA DE MONETIZACIÓN · 2026-07-01</div>
-<div class="big">+161%</div>
+<div class="big"><span style="color:#c46f0a">▲</span> +161%</div>
 <p class="sub">(+95.8 puntos log)</p>
 <div class="gauge"><i style="left:94%;width:4%"></i><b></b></div>
 <p class="sub" style="margin-bottom:0">BTC SOBRE-monetizado vs su equilibrio · corrección 25%/mes · vida media 2.4 meses</p>
-<p class="sub">Percentil 85 de la historia (z +1.1)</p><p class="sub mono" style="margin-bottom:0">Trayectoria implícita del ECT: +40 (3m) · +17 (6m) · +3 (12m) pts log <span style="font-style:italic">(ceteris paribus las demás variables)</span></p></div>
+<p class="sub">Percentil 85 de la historia (z +1.1)</p><p class="sub mono" style="margin-bottom:0">Trayectoria implícita del ECT: +40 (3m) · +17 (6m) · +3 (12m) pts log <span style="font-style:italic">(ceteris paribus las demás variables)</span></p>
+<div class="cwrap spark"><canvas id="c_gap_spark"></canvas></div></div>
 <div class="stack">
 <div class="card"><div class="lbl">RELACIÓN DE LARGO PLAZO</div>
 <p class="mono">DMB* = c + 1.114·MC2*** + 1.971·RV12*** + 0.097·UC</p></div>
-<div class="mini">
-<div class="card"><div class="lbl">COINTEGRACIÓN</div>
-<div class="big mono">F = 46.02</div>
-<span class="pill ok">SÍ · supera I(1) al 1%</span></div>
-<div class="card"><div class="lbl">VELOCIDAD DE AJUSTE</div>
-<div class="big mono">-0.2537</div>
-<p class="sub" style="margin-bottom:0">ECT, p &lt; 0.0001</p></div>
-</div>
 <div class="card"><div class="lbl">EQUILIBRIO IMPLÍCITO (NIVELES)</div><div class="big mono">$501.7B</div><p class="sub mono" style="margin-bottom:0">Precio implícito: $25,010 · observado: $65,210</p><p class="sub" style="margin:6px 0 0">No es pronóstico de precio: el ajuste puede venir por DMB o por crecimiento de las funciones del dinero (MC2, RV12), que elevan el equilibrio.</p></div>
 </div>
 </div>
 <div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><div class="cwrap"><canvas id="c_gap"></canvas></div>
 <p class="sub" style="margin-bottom:0">— tramo ámbar: M2 provisional (nowcast)</p></div>
-<div class="card"><div class="lbl">BRECHA HISTÓRICA (PTS LOG)</div><div class="cwrap"><canvas id="c_brecha"></canvas></div>
-<p class="sub" style="margin-bottom:0">DMB − DMB* a lo largo de la muestra · línea cero y banda ±1σ sobre la media histórica</p></div>
 </section>
-<section id="variables"><h2>Variables</h2>
+<section id="variables"><h2><span class="idx">02</span>Variables</h2>
+<p class="sub">Las cinco variables del modelo. DMB es la monetización de BTC frente a M2; MC2, MC1, RV12 y UC son las funciones del dinero.</p>
 <div class="two">
-<div class="card"><div class="cwrap"><canvas id="c_vars"></canvas></div><p class="sub" style="margin-bottom:0">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div>
-<div class="card"><div class="lbl">ÚLTIMAS LECTURAS</div><table><tr><th>Serie</th><th class="num">Último publicado<br><span class="mono" style="font-weight:400;color:var(--dim)">2026-05</span></th><th class="num">Nowcast <span class="pill warn">NOWCAST</span><br><span class="mono" style="font-weight:400;color:var(--dim)">2026-07</span></th></tr><tr><td>DMB</td><td class="num mono">-2.7524</td><td class="num mono">-2.8692</td></tr><tr><td>MC2</td><td class="num mono">-4.9579</td><td class="num mono">-4.8715</td></tr><tr><td>MC1</td><td class="num mono">-3.4207</td><td class="num mono">-3.4678</td></tr><tr><td>RV12</td><td class="num mono">-0.6594</td><td class="num mono">-0.7862</td></tr><tr><td>UC</td><td class="num mono">0.2438</td><td class="num mono">0.2623</td></tr></table><p class="sub" style="margin:10px 0 0">NOWCAST = M2 aún provisional; no entra a la estimación.</p></div></div></section>
-<section id="cointegracion"><h2>Cointegración</h2>
+<div class="card"><div class="lbl">SERIES DEL MODELO (2015–HOY)</div><div class="cwrap"><canvas id="c_vars"></canvas></div><p class="sub" style="margin-bottom:0">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div>
+<div class="card"><div class="lbl">ÚLTIMAS LECTURAS</div><table><tr><th>Serie</th><th class="num">Último publicado<br><span class="mono" style="font-weight:400;color:var(--dim)">2026-05</span></th><th class="num">Nowcast <span class="pill warn">NOWCAST</span><br><span class="mono" style="font-weight:400;color:var(--dim)">2026-07</span></th></tr><tr><td title="log(MarketCap BTC / M2): monetización de Bitcoin">DMB</td><td class="num mono">-2.7524</td><td class="num mono">-2.8692</td></tr><tr><td title="log(Volumen tx USD / M2): medio de cambio">MC2</td><td class="num mono">-4.9579</td><td class="num mono">-4.8715</td></tr><tr><td title="log(tx / oferta): frecuencia transaccional">MC1</td><td class="num mono">-3.4207</td><td class="num mono">-3.4678</td></tr><tr><td title="momentum 12m de BTC vs oro: reserva de valor">RV12</td><td class="num mono">-0.6594</td><td class="num mono">-0.7862</td></tr><tr><td title="logit(dominancia BTC): unidad de cuenta">UC</td><td class="num mono">0.2438</td><td class="num mono">0.2623</td></tr></table><p class="sub" style="margin:10px 0 0">NOWCAST = M2 aún provisional; no entra a la estimación.</p></div></div></section>
+<section id="cointegracion"><h2><span class="idx">03</span>Cointegración</h2>
+<p class="sub">¿Hay una relación de equilibrio estable de largo plazo? El test de límites lo decide: F por encima del valor crítico I(1) = sí.</p>
 <div class="two">
-<div class="card"><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
+<div class="card"><div class="lbl">PRUEBA DE COINTEGRACIÓN (BOUNDS)</div><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
 <tr><td>10%</td><td class="num">3.220</td><td class="num">4.047</td><td class="num">46.02</td></tr><tr><td>5%</td><td class="num">3.649</td><td class="num">4.528</td><td class="num">46.02</td></tr><tr><td>1%</td><td class="num">4.608</td><td class="num">5.669</td><td class="num">46.02</td></tr>
 </table></div>
 <div class="card"><div class="lbl">DIAGNÓSTICOS</div><table><tr><td>n</td><td class="num">125</td></tr><tr><td>R² ajustada</td><td class="num">0.9980</td></tr><tr><td>Durbin-Watson</td><td class="num">1.596</td></tr><tr><td>Muestra</td><td class="num">2016-01 → 2026-05</td></tr></table><p class="sub" style="margin:12px 0 0">Caveat honesto: el RESET del 6D rechaza (p=0.008) — posible no linealidad; se reporta como limitación, igual que en la tesis.</p></div></div>
-<div class="card"><div class="lbl">ROBUSTEZ DE LA ESPECIFICACIÓN</div><table><tr><th>Especificación</th><th class="num">Bounds F</th><th class="num">ECT</th><th class="num">MC2</th><th class="num">RV12</th><th class="num">UC</th><th class="num">n</th><th class="num">AIC</th></tr><tr><td>Base (0D)</td><td class="num">39.03</td><td class="num">-0.2581</td><td class="num">1.067***</td><td class="num">2.095***</td><td class="num">0.153*</td><td class="num">125</td><td class="num">-262.52</td></tr><tr><td><b>Calibrado 6D</b></td><td class="num">46.02</td><td class="num">-0.2537</td><td class="num">1.114***</td><td class="num">1.971***</td><td class="num">0.097</td><td class="num">125</td><td class="num">—</td></tr><tr><td>8D</td><td class="num">50.75</td><td class="num">-0.2368</td><td class="num">1.105***</td><td class="num">2.201***</td><td class="num">0.154*</td><td class="num">125</td><td class="num">-306.05</td></tr></table><p class="sub" style="margin:10px 0 0">La conclusión no depende de las dummies: la cointegración y los signos se sostienen en las tres especificaciones (robustez del Cap. 3).</p></div></section>
-<section id="funciones-del-dinero"><h2>Funciones del dinero</h2>
+<div class="card"><div class="lbl">ROBUSTEZ DE LA ESPECIFICACIÓN</div><table><tr><th>Especificación</th><th class="num">Bounds F</th><th class="num">ECT</th><th class="num">MC2</th><th class="num">RV12</th><th class="num">UC</th><th class="num">n</th><th class="num">AIC</th></tr><tr><td>Base (0D)</td><td class="num">39.03</td><td class="num">-0.2581</td><td class="num">1.067***</td><td class="num">2.095***</td><td class="num">0.153*</td><td class="num">125</td><td class="num">-262.52</td></tr><tr><td><b>Calibrado 6D</b></td><td class="num">46.02</td><td class="num">-0.2537</td><td class="num">1.114***</td><td class="num">1.971***</td><td class="num">0.097</td><td class="num">125</td><td class="num">—</td></tr><tr><td>8D</td><td class="num">50.75</td><td class="num">-0.2368</td><td class="num">1.105***</td><td class="num">2.201***</td><td class="num">0.154*</td><td class="num">125</td><td class="num">-306.05</td></tr></table><p class="sub" style="margin:10px 0 0">La conclusión no depende de las dummies: la cointegración y los signos se sostienen en las tres especificaciones (robustez del Cap. 3).</p></div>
+<div class="card"><div class="lbl">BRECHA HISTÓRICA (PTS LOG)</div><div class="cwrap"><canvas id="c_brecha"></canvas></div>
+<p class="sub" style="margin-bottom:0">DMB − DMB* a lo largo de la muestra · línea cero y banda ±1σ sobre la media histórica</p></div>
+</section>
+<section id="funciones-del-dinero"><h2><span class="idx">04</span>Funciones del dinero</h2>
+<p class="sub">Cada coeficiente de largo plazo dice si BTC cumple esa función del dinero de forma estadísticamente significativa.</p>
 <div class="grid"><div class="card"><div class="lbl">Reserva de valor · RV12</div><span class="pill ok">CUMPLE</span></div><div class="card"><div class="lbl">Medio de cambio · MC2</div><span class="pill ok">CUMPLE</span></div><div class="card"><div class="lbl">Unidad de cuenta · UC</div><span class="pill bad">NO SIGNIFICATIVA</span></div></div>
-<div class="card half"><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr><tr><td>MC2</td><td class="num">1.1139***</td><td class="num">&lt; 0.0001</td></tr><tr><td>RV12</td><td class="num">1.9709***</td><td class="num">&lt; 0.0001</td></tr><tr><td>UC</td><td class="num">0.0967</td><td class="num">0.1781</td></tr></table></div></section>
-<section id="hechos-estilizados"><h2>Hechos estilizados</h2>
+<div class="card half"><div class="lbl">COEFICIENTES DE LARGO PLAZO</div><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr><tr><td>MC2</td><td class="num">1.1139***</td><td class="num">&lt; 0.0001</td></tr><tr><td>RV12</td><td class="num">1.9709***</td><td class="num">&lt; 0.0001</td></tr><tr><td>UC</td><td class="num">0.0967</td><td class="num">0.1781</td></tr></table></div></section>
+<section id="hechos-estilizados"><h2><span class="idx">05</span>Hechos estilizados</h2>
+<p class="sub">Los hechos del Capítulo 1, en vivo: adopción, escasez y costos de la red.</p>
 <div class="g2x2">
 <div class="card"><div class="lbl">TRANSACCIONES / MES</div><div class="cwrap sm"><canvas id="c_tx"></canvas></div></div>
 <div class="card"><div class="lbl">OFERTA DE BTC</div><div class="cwrap sm"><canvas id="c_supply"></canvas></div></div>
@@ -127,7 +176,8 @@ h1{font-size:26px}
 </div>
 <div class="card"><div class="lbl">PRECIO BTC (LOG)</div><div class="cwrap"><canvas id="c_price"></canvas></div>
 <p class="sub" style="margin-bottom:0">El hecho estilizado más citado de la tesis · escala logarítmica</p></div></section>
-<section id="mercado"><h2>Mercado</h2>
+<section id="mercado"><h2><span class="idx">06</span>Mercado</h2>
+<p class="sub">Precio y dominancia en tiempo real; tu navegador consulta CoinGecko directamente.</p>
 <div class="grid">
 <div class="card" id="ticker"><div class="lbl">PRECIO BTC · EN VIVO</div>
 <p class="big mono" id="tk_price">$65,210</p><p class="sub" style="margin-bottom:0">CoinGecko al abrir; si falla, valor del build</p></div>
@@ -136,9 +186,10 @@ h1{font-size:26px}
 <div class="card"><div class="lbl">OFERTA EN CIRCULACIÓN · AL BUILD</div>
 <p class="big mono">20,060,628</p><p class="sub" style="margin-bottom:0">BTC minados a 2026-07-01</p></div>
 </div></section>
-<section id="datos"><h2>Datos</h2>
+<section id="datos"><h2><span class="idx">07</span>Datos</h2>
+<p class="sub">De dónde viene cada serie y qué tan fresca está.</p>
 <div class="two">
-<div class="card"><table><tr><th>Serie</th><th>Última fecha</th><th>Estado</th></tr><tr><td>btc_price_sampled</td><td>2026-07-21</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>tx_count_sampled</td><td>2026-07-22</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>tx_volume_usd_sampled</td><td>2026-07-21</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>btc_supply</td><td>2026-07-24</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>difficulty</td><td>2026-07-23</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>fees_btc</td><td>2026-07-23</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>gold_price</td><td>2026-07-24</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>m2sl</td><td>2026-05-01</td><td><span class="pill warn">STALE</span></td></tr><tr><td>btc_dominance</td><td>2026-07-24</td><td><span class="pill ok">FRESCO</span></td></tr></table></div>
+<div class="card"><div class="lbl">FRESCURA POR SERIE</div><table><tr><th>Serie</th><th>Última fecha</th><th>Estado</th></tr><tr><td>btc_price_sampled</td><td>2026-07-21</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>tx_count_sampled</td><td>2026-07-22</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>tx_volume_usd_sampled</td><td>2026-07-21</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>btc_supply</td><td>2026-07-24</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>difficulty</td><td>2026-07-23</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>fees_btc</td><td>2026-07-23</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>gold_price</td><td>2026-07-24</td><td><span class="pill ok">FRESCO</span></td></tr><tr><td>m2sl</td><td>2026-05-01</td><td><span class="pill warn">STALE</span></td></tr><tr><td>btc_dominance</td><td>2026-07-24</td><td><span class="pill ok">FRESCO</span></td></tr></table></div>
 <div class="card"><div class="lbl">FUENTES CITABLES</div><p class="sub" style="margin-bottom:0">blockchain.info (on-chain), Stooq / Yahoo Finance (oro), FRED · M2SL, CoinGecko (precio y dominancia vivos), y semilla histórica de dominancia validada en la tesis. Código y datos: <a href="https://github.com/AlonzoBenz/BitcoinTerminal">github.com/AlonzoBenz/BitcoinTerminal</a><br>Metodología: ARDL-Bounds (Pesaran, Shin &amp; Smith, 2001), caso 5. Especificación y diseño: docs/superpowers/specs/ en el repositorio.</p></div>
 </div></section>
 </main>
@@ -179,6 +230,11 @@ if (BR) new Chart(document.getElementById("c_brecha"), {type: "line",
    {label: "+1s", data: BR.valores.map(() => BR.media + BR.sd), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [5, 4]},
    {label: "-1s", data: BR.valores.map(() => BR.media - BR.sd), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [5, 4]}]},
  options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:"#a09681",callback:function(v){return this.getLabelForValue(v).slice(0,4);}}},y:{ticks:{color:"#a09681"}}}}});
+if (BR) new Chart(document.getElementById("c_gap_spark"), {type: "line",
+ data: {labels: BR.fechas, datasets: [
+   {label: "brecha", data: BR.valores, borderColor: "#f7931a", pointRadius: 0, borderWidth: 1.2, spanGaps: false},
+   {label: "cero", data: BR.valores.map(() => 0), borderColor: "#a09681", borderWidth: 1, pointRadius: 0, borderDash: [3, 3]}]},
+ options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
 const _secs = [...document.querySelectorAll("main section[id]")];
 const _links = new Map([...document.querySelectorAll("nav a")].map(a => [a.getAttribute("href").slice(1), a]));
 const _io = new IntersectionObserver(es => {
