@@ -4,8 +4,8 @@
   "last": "2026-07-25"
  },
  "tx_count_sampled": {
-  "status": "STALE",
-  "last": "2026-07-22"
+  "status": "FRESCO",
+  "last": "2026-07-26"
  },
  "tx_volume_usd_sampled": {
   "status": "FRESCO",
@@ -13,19 +13,19 @@
  },
  "btc_supply": {
   "status": "FRESCO",
-  "last": "2026-07-26"
+  "last": "2026-07-27"
  },
  "difficulty": {
   "status": "FRESCO",
-  "last": "2026-07-25"
+  "last": "2026-07-26"
  },
  "fees_btc": {
   "status": "FRESCO",
-  "last": "2026-07-25"
+  "last": "2026-07-26"
  },
  "gold_price": {
   "status": "FRESCO",
-  "last": "2026-07-24"
+  "last": "2026-07-27"
  },
  "m2sl": {
   "status": "STALE",
@@ -33,6 +33,6 @@
  },
  "btc_dominance": {
   "status": "FRESCO",
-  "last": "2026-07-26"
+  "last": "2026-07-27"
  }
 }
