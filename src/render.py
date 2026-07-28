@@ -442,7 +442,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         f'<div class="kv">{sample_yrs}</div></div>'
         f'<div class="kpi"><div class="kl">Observaciones</div>'
         f'<div class="kv">n = {r["n"]}</div></div>'
-        f'<div class="kpi"><div class="kl">R² ajustada</div>'
+        f'<div class="kpi"><div class="kl" title="R² del ARDL en niveles; las series con tendencia lo inflan. En la ecuación UECM (diferencias) de la tesis ronda 0.89.">R² aj. (niveles)</div>'
         f'<div class="kv">{r["r2adj"]:.3f}</div></div>'
         '</div>')
 
@@ -482,7 +482,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
     card_diag = (
         f'<div class="card"><div class="lbl">DIAGNÓSTICOS</div><table>'
         f'<tr><td>n</td><td class="num">{r["n"]}</td></tr>'
-        f'<tr><td>R² ajustada</td><td class="num">{r["r2adj"]:.4f}</td></tr>'
+        f'<tr><td title="ARDL en niveles; en la UECM en diferencias de la tesis ronda 0.89">R² ajustada (niveles)</td><td class="num">{r["r2adj"]:.4f}</td></tr>'
         f'<tr><td>Durbin-Watson</td><td class="num">{r["dw"]:.3f}</td></tr>'
         f'<tr><td>Muestra</td><td class="num">{r["sample"][0][:7]} → {r["sample"][1][:7]}</td></tr>'
         f'</table><p class="sub" style="margin:12px 0 0">Caveat honesto: el RESET '
