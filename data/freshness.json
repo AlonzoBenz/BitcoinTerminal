@@ -1,7 +1,7 @@
 {
  "btc_price_sampled": {
-  "status": "STALE",
-  "last": "2026-07-25"
+  "status": "FRESCO",
+  "last": "2026-07-29"
  },
  "tx_count_sampled": {
   "status": "FRESCO",
@@ -13,7 +13,7 @@
  },
  "btc_supply": {
   "status": "FRESCO",
-  "last": "2026-07-28"
+  "last": "2026-07-29"
  },
  "difficulty": {
   "status": "FRESCO",
