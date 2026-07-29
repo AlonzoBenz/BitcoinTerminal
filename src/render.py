@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import pathlib
+import unicodedata
 import urllib.parse
 
 # SRI de chart.js@4.4.1 (jsdelivr), calculado el 2026-07-16:
@@ -69,6 +70,19 @@ white-space:nowrap}
 .pill.ok{color:var(--ok);background:var(--okbg);border-color:#c0dd97}
 .pill.warn{color:var(--warn);background:var(--warnbg);border-color:#fac775}
 .pill.bad{color:var(--bad);background:#fcebeb;border-color:#f7c1c1}
+.pill.neu{color:var(--dim);background:#f2ede1;border-color:var(--line)}
+.ref{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--faint);
+border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-left:8px;
+vertical-align:2px;letter-spacing:0;white-space:nowrap;text-transform:none}
+tr.hi td{background:#fdf4e6}
+td.alta{color:var(--btctx)}
+.eqs{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:2.1;
+overflow-x:auto}
+.eqs div{white-space:nowrap}
+.eqs b{color:var(--faint);font-weight:400;margin-right:12px}
+.quote{font-style:italic;color:var(--dim);font-size:13px;
+border-left:2px solid var(--line);padding-left:14px;margin:16px 0 0}
+.tw{overflow-x:auto}
 .gauge{height:8px;background:#ece4d2;border-radius:99px;position:relative;margin:10px 0}
 .gauge i{position:absolute;height:8px;background:var(--btc);border-radius:99px}
 .gauge b{position:absolute;left:50%;top:-3px;width:2px;height:14px;background:var(--ink)}
@@ -136,8 +150,11 @@ h1{font-size:26px}
 }
 """
 
-SECCIONES = ["El modelo", "Variables", "Cointegración", "Funciones del dinero",
-             "Hechos estilizados", "Mercado", "Datos"]
+SECCIONES = ["El modelo", "Variables", "Raíz unitaria", "Cointegración",
+             "Funciones del dinero", "Hechos estilizados", "Mercado", "Datos"]
+
+# secciones que sólo existen si su bloque llegó en results.json
+SEC_OPCIONALES = {"Raíz unitaria": "raiz_unitaria"}
 
 # paleta para c_vars: naranja para DMB, tonos tierra para el resto
 VARS_PALETA = {"DMB": "#f7931a", "MC2": "#a09681", "MC1": "#8a7a5c",
@@ -157,12 +174,232 @@ GLOSARIO = {
 
 
 def _ancla(s):
-    return s.lower().replace(" ", "-").replace("ó", "o")
+    """'Cointegración' -> 'cointegracion'. Sin acentos para que el ancla del
+    nav y el id de la sección coincidan siempre."""
+    plano = unicodedata.normalize("NFKD", s.lower())
+    plano = "".join(c for c in plano if not unicodedata.combining(c))
+    return plano.replace(" ", "-")
 
 
 def _fmt_p(p):
     """p-values diminutos reportados honestamente, no como 0.0000."""
     return "p &lt; 0.0001" if p < 1e-4 else f"p = {p:.4f}"
+
+
+def _p_corto(p):
+    """p para celdas de tabla: los diminutos no se redondean a 0.0000."""
+    return "&lt; 0.001" if p < 1e-3 else f"{p:.4f}"
+
+
+def _p_kpss(p):
+    """El p de KPSS sale de una tabla acotada: en los extremos se reporta como
+    cota, no como si fuera un valor exacto."""
+    if p <= 0.01:
+        return "≤ 0.010"
+    if p >= 0.10:
+        return "≥ 0.100"
+    return f"{p:.3f}"
+
+
+def _ref(cuadro):
+    """Badge de referencia cruzada al Capítulo 3 del documento."""
+    return f'<span class="ref">≡ {cuadro}</span>'
+
+
+def _pill_p(p):
+    """Veredicto de una prueba por su p: no rechazar la nula al 5% = OK."""
+    if p is None:
+        return ""
+    return ('<span class="pill ok">OK</span>' if p >= 0.05
+            else '<span class="pill warn">reparo</span>')
+
+
+def _card_raiz(r):
+    """Cuadro 3.3: ADF/KPSS en nivel y ADF en diferencias. '' si no hay bloque."""
+    ru = r.get("raiz_unitaria")
+    if not ru:
+        return ""
+    filas = "".join(
+        f'<tr{" class=\"hi\"" if f["var"] == "MC1" else ""}>'
+        f'<td title="{GLOSARIO.get(f["var"], "")}">{f["var"]}</td>'
+        f'<td class="num">{f["adf_nivel"]:.3f}</td>'
+        f'<td class="num">{_p_corto(f["adf_p"])}</td>'
+        f'<td class="num">{f["kpss_nivel"]:.3f}</td>'
+        f'<td class="num">{_p_kpss(f["kpss_p"])}</td>'
+        f'<td class="num">{f["adf_dif"]:.3f}</td>'
+        f'<td class="num">{_p_corto(f["adf_dif_p"])}</td>'
+        f'<td><span class="pill {"ok" if f["orden"] == "I(0)" else "neu"}">'
+        f'{f["orden"]}</span></td></tr>'
+        for f in ru)
+    return (
+        '<div class="card"><div class="lbl">ORDEN DE INTEGRACIÓN'
+        f'{_ref("Cuadro 3.3")}</div><div class="tw"><table>'
+        '<tr><th>Variable</th><th class="num">ADF (nivel)</th><th class="num">p</th>'
+        '<th class="num">KPSS</th><th class="num">p</th>'
+        '<th class="num">ADF (Δ)</th><th class="num">p</th><th>Orden</th></tr>'
+        f'{filas}</table></div>'
+        '<p class="sub" style="margin:12px 0 0">ADF: la nula es raíz unitaria '
+        '(p &lt; 0.05 = estacionaria). KPSS: la nula es estacionariedad '
+        '(valor alto = se rechaza). Ambas con constante.</p></div>')
+
+
+def _nota_raiz(r):
+    """Lectura honesta del Cuadro 3.3: se adapta a lo que salga en la muestra
+    viva en vez de afirmar la mezcla I(0)/I(1) de la muestra congelada."""
+    ru = r.get("raiz_unitaria")
+    if not ru:
+        return ""
+    if any(f["orden"].startswith("≥") for f in ru):
+        return ("Alguna serie no alcanza estacionariedad ni en primeras "
+                "diferencias en esta muestra: el Bounds exige que ninguna sea "
+                "I(2), así que conviene leerlo con reservas.")
+    if any(f["orden"] == "I(0)" for f in ru):
+        return ("Ninguna serie es I(2) y hay mezcla de I(0)/I(1) — exactamente "
+                "el caso que justifica ARDL-Bounds en lugar de Johansen.")
+    mc1 = next((f for f in ru if f["var"] == "MC1"), None)
+    filo = f" — MC1 se queda al filo (ADF p = {mc1['adf_p']:.4f})" if mc1 else ""
+    return ("Ninguna serie es I(2), que es el requisito del Bounds. En esta "
+            f"muestra viva todas resultan I(1){filo}. En la muestra congelada "
+            "de la tesis MC1 sale I(0), y esa mezcla I(0)/I(1) es la que "
+            "justifica ARDL-Bounds frente a Johansen.")
+
+
+def _card_correlacion(r):
+    """Cuadro 3.10: matriz 5x5, |r| > 0.9 en naranja."""
+    c = r.get("correlacion")
+    if not c:
+        return ""
+    vs, M = c["vars"], c["m"]
+    cab = "".join(f'<th class="num">{v}</th>' for v in vs)
+    filas = "".join(
+        f'<tr><td title="{GLOSARIO.get(v, "")}">{v}</td>' + "".join(
+            f'<td class="num{" alta" if i != j and abs(x) > 0.9 else ""}">{x:.3f}</td>'
+            for j, x in enumerate(M[i])) + '</tr>'
+        for i, v in enumerate(vs))
+    return (
+        f'<div class="card"><div class="lbl">CORRELACIÓN{_ref("Cuadro 3.10")}</div>'
+        f'<div class="tw"><table><tr><th></th>{cab}</tr>{filas}</table></div>'
+        '<p class="sub" style="margin:10px 0 0">DMB y MC2 comparten casi toda '
+        'su variación (naranja): por eso la colinealidad se vigila con el VIF '
+        'de los regresores, no con esta matriz.</p></div>')
+
+
+def _card_vif(r):
+    """Cuadro 3.11: VIF de los tres regresores del largo plazo."""
+    v = r.get("vif")
+    if not v:
+        return ""
+    filas = "".join(
+        f'<tr><td title="{GLOSARIO.get(k, "")}">{k}</td>'
+        f'<td class="num">{val:.4f}</td>'
+        f'<td><span class="pill {"ok" if val < 5 else "warn"}">'
+        f'{"&lt; 5 OK" if val < 5 else "alto"}</span></td></tr>'
+        for k, val in v.items())
+    return (
+        f'<div class="card"><div class="lbl">VIF{_ref("Cuadro 3.11")}</div>'
+        f'<table><tr><th>Regresor</th><th class="num">VIF</th><th>Veredicto</th></tr>'
+        f'{filas}</table>'
+        '<p class="sub" style="margin:10px 0 0">Factor de inflación de la '
+        'varianza. Por debajo de 5 no hay multicolinealidad preocupante.</p></div>')
+
+
+def _card_hac(r):
+    """Cuadro 3.12: errores estándar robustos Newey-West."""
+    h = r.get("hac")
+    if not h:
+        return ""
+    filas = "".join(
+        f'<tr><td title="{GLOSARIO.get(k, "")}">{k}</td>'
+        f'<td class="num">{d["coef"]:+.4f}</td>'
+        f'<td class="num">{_p_corto(d["p"])}</td>'
+        f'<td>{_pill_p(d["p"])}</td></tr>'
+        for k, d in h.items())
+    return (
+        f'<div class="card"><div class="lbl">ERRORES ROBUSTOS HAC{_ref("Cuadro 3.12")}</div>'
+        f'<table><tr><th>Término en nivel</th><th class="num">Coef.</th>'
+        f'<th class="num">p</th><th>Al 5%</th></tr>{filas}</table>'
+        '<p class="sub" style="margin:10px 0 0">Errores robustos HAC '
+        '(Newey-West, 12 rezagos): la significancia de MC2 y RV12 se '
+        'mantiene.</p></div>')
+
+
+CAVEAT_RESET = ('Caveat honesto: el RESET del 6D rechaza (p=0.008) — posible no '
+                'linealidad; se reporta como limitación, igual que en la tesis.')
+
+
+def _card_diagnosticos(r):
+    """Cuadro 3.9: pruebas sobre los residuos de la UECM. Si no llegó el bloque
+    se degrada a la tarjeta mínima de siempre (n, R², DW, muestra)."""
+    d = r.get("diagnosticos") or {}
+    muestra = (f'<tr><td>Muestra</td><td class="num" colspan="2">'
+               f'{r["sample"][0][:7]} → {r["sample"][1][:7]}</td></tr>')
+    if not d:
+        return (
+            f'<div class="card"><div class="lbl">DIAGNÓSTICOS{_ref("Cuadro 3.9")}</div><table>'
+            f'<tr><td>n</td><td class="num" colspan="2">{r["n"]}</td></tr>'
+            f'<tr><td title="ARDL en niveles; en la UECM en diferencias de la tesis ronda 0.89">'
+            f'R² ajustada (niveles)</td><td class="num" colspan="2">{r["r2adj"]:.4f}</td></tr>'
+            f'<tr><td>Durbin-Watson</td><td class="num" colspan="2">{r["dw"]:.3f}</td></tr>'
+            f'{muestra}</table>'
+            f'<p class="sub" style="margin:12px 0 0">{CAVEAT_RESET}</p></div>')
+
+    def fila(nombre, valor, p=None, title=""):
+        t = f' title="{title}"' if title else ""
+        return (f'<tr><td{t}>{nombre}</td><td class="num">{valor}</td>'
+                f'<td>{_pill_p(p)}</td></tr>')
+
+    def val(clave, fmt="{:.4f}"):
+        v = d.get(clave)
+        return "—" if v is None else fmt.format(v)
+
+    dw = d.get("dw", r["dw"])
+    r2u = d.get("r2adj_uecm")
+    filas = (
+        fila("Durbin-Watson", f"{dw:.3f}" if dw is not None else "—",
+             title="Autocorrelación de primer orden; cerca de 2 es lo deseable")
+        + fila("Breusch-Pagan (p)", val("bp_p"), d.get("bp_p"),
+               title="Nula: homocedasticidad")
+        + fila("ARCH LM (p)", val("arch_p"), d.get("arch_p"),
+               title="Nula: sin heterocedasticidad condicional (12 rezagos)")
+        + fila("Ljung-Box(12) (p)", val("lb12_p"), d.get("lb12_p"),
+               title="Nula: residuos sin autocorrelación hasta el rezago 12")
+        + fila("Jarque-Bera (p)", val("jb_p"), d.get("jb_p"),
+               title="Nula: residuos normales")
+        + fila("RESET (p)", val("reset_p"), d.get("reset_p"),
+               title="Nula: forma funcional lineal correcta (ecuación en niveles)")
+        + fila("R² ajustada UECM", "—" if r2u is None else f"{r2u:.4f}",
+               title="La misma que reporta la tesis: ecuación (3.3), en diferencias")
+        + fila("n", str(r["n"]))
+        + muestra)
+
+    rp = d.get("reset_p")
+    if rp is None:
+        caveat = CAVEAT_RESET
+    elif rp < 0.05:
+        caveat = (f'El RESET rechaza (p={rp:.4f}): posible no linealidad. La '
+                  f'tesis lo reporta como limitación y línea de investigación '
+                  f'futura.')
+    else:
+        caveat = (f'El RESET no rechaza (p={rp:.4f}): en esta muestra no hay '
+                  f'evidencia de error de forma funcional.')
+    return (
+        f'<div class="card"><div class="lbl">DIAGNÓSTICOS{_ref("Cuadro 3.9")}</div>'
+        f'<table>{filas}</table>'
+        f'<p class="sub" style="margin:12px 0 0">{caveat}</p></div>')
+
+
+CARD_ESPEC = (
+    '<div class="card"><div class="lbl">ESPECIFICACIÓN (§3.3 DE LA TESIS)</div>'
+    '<div class="eqs">'
+    '<div><b>(3.1)</b>DMB<sub>t</sub> = β₀ + β₁·MC2<sub>t</sub> + β₂·RV12<sub>t</sub>'
+    ' + β₃·UC<sub>t</sub> + u<sub>t</sub></div>'
+    '<div><b>(3.3)</b>ΔDMB<sub>t</sub> = α + δt + θ₀·DMB<sub>t−1</sub> + θ′·X<sub>t−1</sub>'
+    ' + Σγ<sub>i</sub>·ΔDMB<sub>t−i</sub> + Σλ<sub>j</sub>′·ΔX<sub>t−j</sub>'
+    ' + ε<sub>t</sub></div>'
+    '</div>'
+    '<p class="sub" style="margin:12px 0 0">(3.1) es la relación de largo plazo '
+    'que se busca; (3.3) es la UECM que efectivamente se estima y de la que '
+    'salen el Bounds F, el ECT y los coeficientes de largo plazo.</p></div>')
 
 
 def _leer_vars(monthly_csv):
@@ -267,11 +504,12 @@ def _tabla_robustez(r):
         f'<td class="num">{f"{d['aic']:.2f}" if d.get("aic") is not None else "—"}</td></tr>'
         for nombre, d, bold in especs)
     return (
-        '<div class="card"><div class="lbl">ROBUSTEZ DE LA ESPECIFICACIÓN</div>'
-        '<table><tr><th>Especificación</th><th class="num">Bounds F</th>'
+        '<div class="card"><div class="lbl">ROBUSTEZ DE LA ESPECIFICACIÓN'
+        f'{_ref("Cuadro 3.4")}</div>'
+        '<div class="tw"><table><tr><th>Especificación</th><th class="num">Bounds F</th>'
         '<th class="num">ECT</th><th class="num">MC2</th><th class="num">RV12</th>'
         '<th class="num">UC</th><th class="num">n</th><th class="num">AIC</th></tr>'
-        f'{filas}</table>'
+        f'{filas}</table></div>'
         f'<p class="sub" style="margin:10px 0 0">{nota}</p></div>')
 
 
@@ -404,7 +642,12 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
     gap_nivel = (math.exp(gap / 100) - 1) * 100            # equivalente en nivel
     lado = "SUB-monetizado" if gap < 0 else "SOBRE-monetizado"
     cointegra = r["boundsF"] > r["crit"]["1%"][1]
-    nav = "".join(f'<a href="#{_ancla(s)}">{s}</a>' for s in SECCIONES)
+    # las secciones opcionales desaparecen del nav y del índice si su bloque no
+    # llegó en results.json, de modo que la numeración 01..0N siempre cuadre
+    secciones = [s for s in SECCIONES
+                 if s not in SEC_OPCIONALES or r.get(SEC_OPCIONALES[s])]
+    idx = {s: f"{i:02d}" for i, s in enumerate(secciones, 1)}
+    nav = "".join(f'<a href="#{_ancla(s)}">{s}</a>' for s in secciones)
     alertas = "".join(f'<div class="alerta">⚠ {a}</div>' for a in r["alertas"])
     lr = r["lr"]
     filas_lr = "".join(
@@ -428,6 +671,20 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 
     # PANEL DE INSTRUMENTOS (KPI strip) al inicio de la sección El modelo
     sample_yrs = f'{r["sample"][0][:4]}–{r["sample"][1][:4]}'
+    # El R² que reporta la tesis es el de la UECM en diferencias; el del ARDL en
+    # niveles va inflado por la tendencia. Se prefiere el primero si llegó.
+    r2u = (r.get("diagnosticos") or {}).get("r2adj_uecm")
+    if r2u is None:
+        kpi_r2 = (f'<div class="kpi"><div class="kl" title="R² del ARDL en niveles;'
+                  f' las series con tendencia lo inflan. En la ecuación UECM'
+                  f' (diferencias) de la tesis ronda 0.89.">R² aj. (niveles)</div>'
+                  f'<div class="kv">{r["r2adj"]:.3f}</div></div>')
+    else:
+        kpi_r2 = (f'<div class="kpi"><div class="kl" title="Igual que la tesis'
+                  f' (ec. 3.3 en diferencias). El R² del ARDL en niveles'
+                  f' ({r["r2adj"]:.3f}) está inflado por la tendencia.">'
+                  f'R² aj. (UECM)</div>'
+                  f'<div class="kv">{r2u:.3f}</div></div>')
     kpis_html = (
         '<div class="card kpis">'
         f'<div class="kpi"><div class="kl">Veredicto</div>'
@@ -435,15 +692,15 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         f'{"SÍ cointegra" if cointegra else "en duda"}</div></div>'
         f'<div class="kpi"><div class="kl">Bounds F</div>'
         f'<div class="kv">{r["boundsF"]:.2f}</div></div>'
-        f'<div class="kpi"><div class="kl" title="{GLOSARIO["ECT"]}">ECT</div>'
+        f'<div class="kpi"><div class="kl" title="{GLOSARIO["ECT"]}">ECT'
+        f'{_ref("Cuadro 3.8")}</div>'
         f'<div class="kv">{r["ect"]["coef"]:.3f}</div>'
         f'<div class="ksub">vida media {r["ect"]["half_life_m"]:.1f} m</div></div>'
         f'<div class="kpi"><div class="kl">Muestra</div>'
         f'<div class="kv">{sample_yrs}</div></div>'
         f'<div class="kpi"><div class="kl">Observaciones</div>'
         f'<div class="kv">n = {r["n"]}</div></div>'
-        f'<div class="kpi"><div class="kl" title="R² del ARDL en niveles; las series con tendencia lo inflan. En la ecuación UECM (diferencias) de la tesis ronda 0.89.">R² aj. (niveles)</div>'
-        f'<div class="kv">{r["r2adj"]:.3f}</div></div>'
+        f'{kpi_r2}'
         '</div>')
 
     trend_glyph = "▲" if gap > 0 else "▼"
@@ -478,16 +735,8 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
         card_lect = ('<div class="card"><div class="lbl">ÚLTIMAS LECTURAS</div>'
                      '<p class="sub">Sin lecturas disponibles.</p></div>')
 
-    # DIAGNÓSTICOS (Cointegración, columna derecha)
-    card_diag = (
-        f'<div class="card"><div class="lbl">DIAGNÓSTICOS</div><table>'
-        f'<tr><td>n</td><td class="num">{r["n"]}</td></tr>'
-        f'<tr><td title="ARDL en niveles; en la UECM en diferencias de la tesis ronda 0.89">R² ajustada (niveles)</td><td class="num">{r["r2adj"]:.4f}</td></tr>'
-        f'<tr><td>Durbin-Watson</td><td class="num">{r["dw"]:.3f}</td></tr>'
-        f'<tr><td>Muestra</td><td class="num">{r["sample"][0][:7]} → {r["sample"][1][:7]}</td></tr>'
-        f'</table><p class="sub" style="margin:12px 0 0">Caveat honesto: el RESET '
-        f'del 6D rechaza (p=0.008) — posible no linealidad; se reporta como '
-        f'limitación, igual que en la tesis.</p></div>')
+    # DIAGNÓSTICOS (Cointegración, columna derecha) — Cuadro 3.9 sobre la UECM
+    card_diag = _card_diagnosticos(r)
 
     # BRECHA: contexto histórico (percentil/z), trayectoria del ECT y
     # equilibrio implícito en niveles (T14, todo derivado de r + monthly.csv)
@@ -511,6 +760,22 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
     else:
         mcap_str = "—"
         precio_linea = "Precio implícito: — · observado: —"
+    # bloques nuevos del Cap.3 (T17); "" si su bloque no llegó
+    card_raiz = _card_raiz(r)
+    nota_raiz = _nota_raiz(r)
+    card_corr = _card_correlacion(r)
+    card_vif = _card_vif(r)
+    card_hac = _card_hac(r)
+    if card_corr and card_vif:
+        fila_corr_vif = f'<div class="g2x2">{card_corr}{card_vif}</div>'
+    else:
+        fila_corr_vif = card_corr or card_vif
+    seccion_raiz = (
+        f'<section id="{_ancla("Raíz unitaria")}">'
+        f'<h2><span class="idx">{idx.get("Raíz unitaria", "")}</span>Raíz unitaria</h2>'
+        f'<p class="sub">{nota_raiz}</p>{card_raiz}</section>'
+    ) if card_raiz else ""
+
     card_equilibrio = (
         '<div class="card"><div class="lbl">EQUILIBRIO IMPLÍCITO (NIVELES)</div>'
         f'<div class="big mono">{mcap_str}</div>'
@@ -546,9 +811,9 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 
     html = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bitcoin Terminal · ¿Es Bitcoin dinero?</title>
+<title>El Bitcoin ¿es dinero? · Bitcoin Terminal</title>
 <meta name="description" content="{META_DESC}">
-<meta property="og:title" content="Bitcoin Terminal · ¿Es Bitcoin dinero?">
+<meta property="og:title" content="El Bitcoin ¿es dinero? · Bitcoin Terminal">
 <meta property="og:description" content="{META_DESC}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{SITE_URL}">
@@ -559,9 +824,10 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="statusbar"><span class="live"><span class="dot"></span>EN VIVO</span>
 <span class="meta">Modelo re-estimado {r["generated_at"][:10]} · muestra {r["sample"][0]} → {r["sample"][1]} · n={r["n"]} · datos frescos</span></div>
 <main>
-<section id="{_ancla(SECCIONES[0])}">
-<h1><span class="idx">01</span>¿Es Bitcoin dinero?</h1>
-<p class="sub" style="margin-bottom:10px">Evidencia de cointegración ARDL — Calibrado 6D, {r["sample"][0]} → {r["sample"][1]} (n={r["n"]}) · UNAM, Facultad de Economía</p>
+<section id="{_ancla("El modelo")}">
+<h1><span class="idx">{idx["El modelo"]}</span>El Bitcoin ¿es dinero?</h1>
+<p class="sub" style="margin-bottom:4px">Evidencia de cointegración ARDL — Calibrado 6D, {r["sample"][0]} → {r["sample"][1]} (n={r["n"]})</p>
+<p class="sub" style="margin-bottom:10px;color:var(--faint)">Alonzo Niño Mendoza · Asesora: Dra. Nancy Ivonne Muller Duran · Facultad de Economía, UNAM</p>
 <div class="verdict"><span class="lead">El modelo responde:</span>{verdict_chips}</div>
 {alertas}
 {kpis_html}
@@ -579,30 +845,35 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 {card_equilibrio}
 </div>
 </div>
+{CARD_ESPEC}
 <div class="card"><div class="lbl">DMB OBSERVADO VS EQUILIBRIO</div><div class="cwrap"><canvas id="c_gap"></canvas></div>
 <p class="sub" style="margin-bottom:0">— tramo ámbar: M2 provisional (nowcast)</p></div>
 </section>
-<section id="{_ancla(SECCIONES[1])}"><h2><span class="idx">02</span>Variables</h2>
+<section id="{_ancla("Variables")}"><h2><span class="idx">{idx["Variables"]}</span>Variables</h2>
 <p class="sub">Las cinco variables del modelo. DMB es la monetización de BTC frente a M2; MC2, MC1, RV12 y UC son las funciones del dinero.</p>
 <div class="two">
-<div class="card"><div class="lbl">SERIES DEL MODELO (2015–HOY)</div><div class="cwrap"{oculto["vars"]}><canvas id="c_vars"></canvas></div><p class="sub" style="margin-bottom:0">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div>
+<div class="card"><div class="lbl">SERIES DEL MODELO (2015–HOY){_ref("Figura 3.1")}</div><div class="cwrap"{oculto["vars"]}><canvas id="c_vars"></canvas></div><p class="sub" style="margin-bottom:0">DMB, MC2, MC1, RV12, UC — meses nowcast punteados en ámbar</p></div>
 {card_lect}</div></section>
-<section id="{_ancla(SECCIONES[2])}"><h2><span class="idx">03</span>Cointegración</h2>
+{seccion_raiz}
+<section id="{_ancla("Cointegración")}"><h2><span class="idx">{idx["Cointegración"]}</span>Cointegración</h2>
 <p class="sub">¿Hay una relación de equilibrio estable de largo plazo? El test de límites lo decide: F por encima del valor crítico I(1) = sí.</p>
 <div class="two">
-<div class="card"><div class="lbl">PRUEBA DE COINTEGRACIÓN (BOUNDS)</div><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
+<div class="card"><div class="lbl">PRUEBA DE COINTEGRACIÓN (BOUNDS){_ref("Cuadro 3.6")}</div><table><tr><th>Nivel</th><th class="num">I(0)</th><th class="num">I(1)</th><th class="num">F</th></tr>
 {"".join(f'<tr><td>{n}</td><td class="num">{c[0]:.3f}</td><td class="num">{c[1]:.3f}</td><td class="num">{r["boundsF"]:.2f}</td></tr>' for n, c in r["crit"].items())}
 </table></div>
 {card_diag}</div>
 {card_robustez}
+{fila_corr_vif}
+{card_hac}
 <div class="card"><div class="lbl">BRECHA HISTÓRICA (PTS LOG)</div><div class="cwrap"{oculto_brecha}><canvas id="c_brecha"></canvas></div>
 <p class="sub" style="margin-bottom:0">DMB − DMB* a lo largo de la muestra · línea cero y banda ±1σ sobre la media histórica</p></div>
 </section>
-<section id="{_ancla(SECCIONES[3])}"><h2><span class="idx">04</span>Funciones del dinero</h2>
+<section id="{_ancla("Funciones del dinero")}"><h2><span class="idx">{idx["Funciones del dinero"]}</span>Funciones del dinero</h2>
 <p class="sub">Cada coeficiente de largo plazo dice si BTC cumple esa función del dinero de forma estadísticamente significativa.</p>
 <div class="grid">{cards_fn}</div>
-<div class="card half"><div class="lbl">COEFICIENTES DE LARGO PLAZO</div><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr>{filas_lr}</table></div></section>
-<section id="{_ancla(SECCIONES[4])}"><h2><span class="idx">05</span>Hechos estilizados</h2>
+<p class="quote">«Existe evidencia de que Bitcoin se comporta a largo plazo como medio de cambio y reserva de valor; el modelo no favorece su comportamiento como unidad de cuenta.» — Conclusiones, Cap. 3</p>
+<div class="card half" style="margin-top:16px"><div class="lbl">COEFICIENTES DE LARGO PLAZO{_ref("Cuadro 3.7")}</div><table><tr><th>Variable</th><th class="num">Coef. LP</th><th class="num">p</th></tr>{filas_lr}</table></div></section>
+<section id="{_ancla("Hechos estilizados")}"><h2><span class="idx">{idx["Hechos estilizados"]}</span>Hechos estilizados</h2>
 <p class="sub">Los hechos del Capítulo 1, en vivo: adopción, escasez y costos de la red.</p>
 <div class="g2x2">
 <div class="card"><div class="lbl">TRANSACCIONES / MES</div><div class="cwrap sm"{oculto["tx"]}><canvas id="c_tx"></canvas></div></div>
@@ -612,7 +883,7 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 </div>
 <div class="card"><div class="lbl">PRECIO BTC (LOG)</div><div class="cwrap"{oculto["price"]}><canvas id="c_price"></canvas></div>
 <p class="sub" style="margin-bottom:0">El hecho estilizado más citado de la tesis · escala logarítmica</p></div></section>
-<section id="{_ancla(SECCIONES[5])}"><h2><span class="idx">06</span>Mercado</h2>
+<section id="{_ancla("Mercado")}"><h2><span class="idx">{idx["Mercado"]}</span>Mercado</h2>
 <p class="sub">Precio y dominancia en tiempo real; tu navegador consulta CoinGecko directamente.</p>
 <div class="grid">
 <div class="card" id="ticker"><div class="lbl">PRECIO BTC · EN VIVO</div>
@@ -622,11 +893,11 @@ def render(r, freshness, out="site/index.html", monthly_csv="data/monthly.csv"):
 <div class="card"><div class="lbl">OFERTA EN CIRCULACIÓN · AL BUILD</div>
 <p class="big mono">{sup_init}</p><p class="sub" style="margin-bottom:0">BTC minados a {sup_fecha}</p></div>
 </div></section>
-<section id="{_ancla(SECCIONES[6])}"><h2><span class="idx">07</span>Datos</h2>
+<section id="{_ancla("Datos")}"><h2><span class="idx">{idx["Datos"]}</span>Datos</h2>
 <p class="sub">De dónde viene cada serie y qué tan fresca está.</p>
 <div class="two">
 <div class="card"><div class="lbl">FRESCURA POR SERIE</div><table><tr><th>Serie</th><th>Última fecha</th><th>Estado</th></tr>{filas_datos}</table></div>
-<div class="card"><div class="lbl">FUENTES CITABLES</div><p class="sub" style="margin-bottom:0">blockchain.info (on-chain), Stooq / Yahoo Finance (oro), FRED · M2SL, CoinGecko (precio y dominancia vivos), y semilla histórica de dominancia validada en la tesis. Código y datos: <a href="{REPO_URL}">github.com/AlonzoBenz/BitcoinTerminal</a><br>Metodología: ARDL-Bounds (Pesaran, Shin &amp; Smith, 2001), caso 5. Especificación y diseño: docs/superpowers/specs/ en el repositorio.</p></div>
+<div class="card"><div class="lbl">FUENTES CITABLES{_ref("Cuadro 3.13")}</div><p class="sub" style="margin-bottom:0">blockchain.info (on-chain), Stooq / Yahoo Finance (oro), FRED · M2SL, CoinGecko (precio y dominancia vivos), y semilla histórica de dominancia validada en la tesis. Código y datos: <a href="{REPO_URL}">github.com/AlonzoBenz/BitcoinTerminal</a><br>Metodología: ARDL-Bounds (Pesaran, Shin &amp; Smith, 2001), caso 5. Especificación y diseño: docs/superpowers/specs/ en el repositorio.</p></div>
 </div></section>
 </main>
 <footer>Generado {r["generated_at"]} · Modelo re-estimado con muestra {r["sample"][0]} → {r["sample"][1]} · Alonzo Niño Mendoza · Especificación congelada Calibrado 6D · <a href="{REPO_URL}">repositorio</a> · Los meses sin M2 publicado no entran a la estimación.</footer>

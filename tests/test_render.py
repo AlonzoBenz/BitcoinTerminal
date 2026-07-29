@@ -19,7 +19,9 @@ def test_html_contiene_lo_esencial(tmp_path):
                  "No es pronóstico", "ROBUSTEZ DE LA ESPECIFICACIÓN",
                  "Último publicado", "Pesaran",
                  "EN VIVO", "El modelo responde", "PRUEBA DE COINTEGRACIÓN",
-                 "c_gap_spark", "SERIES DEL MODELO"):
+                 "c_gap_spark", "SERIES DEL MODELO",
+                 "Raíz unitaria", "≡ Cuadro 3.3", "Ljung-Box",
+                 "Muller Duran", "(3.3)"):
         assert frag in html, frag
 
 

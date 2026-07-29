@@ -16,3 +16,14 @@ def test_results_json_estructura(tmp_path):
     assert len(r["series"]["fechas"]) == len(r["series"]["dmb"]) == len(r["series"]["dmb_star"])
     assert "robustez" in r
     assert "base" in r["robustez"]
+
+
+def test_results_json_cap3(tmp_path):
+    """T17: bloques del Cap.3 que alimentan los cuadros del portal."""
+    out = tmp_path / "results.json"
+    estimate.run(monthly_csv=FIX, out=out)
+    r = json.loads(out.read_text())
+    assert "diagnosticos" in r
+    assert "raiz_unitaria" in r
+    assert len(r["raiz_unitaria"]) == 5
+    assert "vif" in r
