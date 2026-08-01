@@ -13,19 +13,19 @@
  },
  "btc_supply": {
   "status": "FRESCO",
-  "last": "2026-07-31"
+  "last": "2026-08-01"
  },
  "difficulty": {
   "status": "FRESCO",
-  "last": "2026-07-30"
+  "last": "2026-07-31"
  },
  "fees_btc": {
   "status": "FRESCO",
-  "last": "2026-07-30"
+  "last": "2026-07-31"
  },
  "gold_price": {
-  "status": "FRESCO",
-  "last": "2026-07-31"
+  "status": "DEAD",
+  "last": "2026-07-01"
  },
  "m2sl": {
   "status": "STALE",
@@ -33,6 +33,6 @@
  },
  "btc_dominance": {
   "status": "FRESCO",
-  "last": "2026-07-31"
+  "last": "2026-08-01"
  }
 }
