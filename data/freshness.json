@@ -1,19 +1,19 @@
 {
  "btc_price_sampled": {
   "status": "FRESCO",
-  "last": "2026-08-18"
+  "last": "2026-08-22"
  },
  "tx_count_sampled": {
   "status": "STALE",
   "last": "2026-08-15"
  },
  "tx_volume_usd_sampled": {
-  "status": "FRESCO",
+  "status": "STALE",
   "last": "2026-08-18"
  },
  "btc_supply": {
   "status": "FRESCO",
-  "last": "2026-08-21"
+  "last": "2026-08-22"
  },
  "difficulty": {
   "status": "STALE",
@@ -33,6 +33,6 @@
  },
  "btc_dominance": {
   "status": "FRESCO",
-  "last": "2026-08-21"
+  "last": "2026-08-22"
  }
 }
