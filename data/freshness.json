@@ -8,12 +8,12 @@
   "last": "2026-08-15"
  },
  "tx_volume_usd_sampled": {
-  "status": "STALE",
-  "last": "2026-08-18"
+  "status": "FRESCO",
+  "last": "2026-08-22"
  },
  "btc_supply": {
   "status": "FRESCO",
-  "last": "2026-08-22"
+  "last": "2026-08-23"
  },
  "difficulty": {
   "status": "STALE",
@@ -33,6 +33,6 @@
  },
  "btc_dominance": {
   "status": "FRESCO",
-  "last": "2026-08-22"
+  "last": "2026-08-23"
  }
 }
